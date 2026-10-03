@@ -32,6 +32,31 @@ export const REGLA_FRAUDE: Record<string, string> = {
   monto_atipico: "Monto atípico",
   rafaga_compras: "Ráfaga de compras",
   par_cliente_cajero: "Par cliente-cajero",
+  cliente_concentrado: "Cliente concentrado",
   modelo_anomalias: "Modelo de anomalías",
   canje_tras_sospecha: "Canje tras sospecha",
 };
+
+export const TIPOS_EVENTO: Record<string, string> = {
+  concierto: "Concierto",
+  feria: "Feria",
+  taller: "Taller",
+  infantil: "Infantil",
+  cine: "Cine",
+  deporte: "Deporte",
+  lanzamiento: "Lanzamiento",
+  degustacion: "Degustación",
+  moda: "Moda",
+  cultural: "Cultural",
+  otro: "Otro",
+};
+
+export const ESTADO_REVISION: Record<string, [string, string]> = {
+  pendiente: ["Por aprobar", "tenue"],
+  aprobada: ["Publicado", "exito"],
+  rechazada: ["Rechazado", "alerta"],
+  cancelada: ["Cancelado", "tenue"],
+};
+
+/** «2026-10-03T18:00» del input datetime-local → ISO con zona horaria. */
+export const isoLocal = (v: string) => (v ? new Date(v).toISOString() : "");

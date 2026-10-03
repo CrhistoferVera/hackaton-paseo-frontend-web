@@ -25,11 +25,19 @@ export default function Promociones() {
     if (r) void recargar();
   }
 
+  const vencida = (p: any) => String(p.fin).slice(0, 10) < hoyIso();
+
+  async function finalizar(p: any) {
+    if (!confirm(p.estado === "aprobada" ? `¿Terminar «${p.titulo}» hoy?` : `¿Retirar «${p.titulo}»?`)) return;
+    const r = await a.ejecutar(() => api(`/local/promociones/${p.id}`, { metodo: "DELETE" }), p.estado === "aprobada" ? "La promoción termina hoy" : "Promoción retirada");
+    if (r) void recargar();
+  }
+
   const alternar = (d: number) => setF({ ...f, diasSemana: f.diasSemana.includes(d) ? f.diasSemana.filter((x) => x !== d) : [...f.diasSemana, d].sort() });
 
   return (
     <>
-      <Cabecera ceja="Mi local" titulo="Promociones" descripcion="Atrae clientes en tus horas flojas. Cada promoción se publica cuando la administración del Paseo la aprueba." />
+      <Cabecera ceja="Mi negocio" titulo="Promociones" descripcion="Atrae clientes en tus horas flojas. Cada promoción se publica cuando la administración del Paseo la aprueba." />
       <div className="dos-col">
         <form onSubmit={crear} style={{ display: "grid", gap: 16 }}>
           {flojas.length > 0 && <div className="aviso">Tus horas con menos compras en los últimos 30 días: <b>{flojas.join(", ")}</b>.</div>}
@@ -75,8 +83,11 @@ export default function Promociones() {
                       </small>
                       {p.comentario && <small>Comentario: {p.comentario}</small>}
                     </td>
-                    <td className="der">
-                      <span className={`etiqueta ${p.estado === "aprobada" ? "exito" : p.estado === "rechazada" ? "alerta" : "tenue"}`}>{p.estado}</span>
+                    <td className="der" style={{ whiteSpace: "nowrap" }}>
+                      <span className={`etiqueta ${p.estado === "aprobada" ? "exito" : p.estado === "rechazada" ? "alerta" : "tenue"}`}>{vencida(p) ? "terminada" : p.estado}</span>
+                      {!vencida(p) && p.estado !== "rechazada" && (
+                        <button className="btn claro chico" style={{ marginLeft: 8 }} onClick={() => finalizar(p)}>{p.estado === "aprobada" ? "Terminar hoy" : "Retirar"}</button>
+                      )}
                     </td>
                   </tr>
                 ))}

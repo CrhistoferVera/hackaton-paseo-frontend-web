@@ -6,11 +6,11 @@ import { api } from "@/lib/api";
 import { fecha } from "@/lib/formato";
 import { useAccion, useDatos } from "@/lib/use-datos";
 
-const ROLES = [["", "Todos"], ["cliente", "Clientes"], ["cajero", "Cajeros"], ["gerente", "Gerentes"], ["admin", "Admin"], ["marketing", "Marketing"], ["analista", "Analistas"]];
+const ROLES = [["", "Todos"], ["cliente", "Clientes"], ["comercio", "Comercios"], ["admin", "Admin"], ["marketing", "Marketing"], ["analista", "Analistas"]];
 
-/** HU-A02: bloquear clientes, crear personal de locales y roles internos (con doble factor). */
+/** HU-A02: bloquear clientes, crear cuentas de comercio y roles internos (con doble factor). */
 export default function Usuarios() {
-  const [rol, setRol] = useState("gerente");
+  const [rol, setRol] = useState("comercio");
   const [q, setQ] = useState("");
   const { datos, recargar } = useDatos<any[]>(`/admin/usuarios?rol=${rol}${q ? `&q=${encodeURIComponent(q)}` : ""}`);
   const { datos: plano } = useDatos<any>("/recinto/plano");
@@ -34,7 +34,7 @@ export default function Usuarios() {
   return (
     <>
       <Cabecera ceja="Programa" titulo="Usuarios y roles" descripcion="Los roles internos ingresan con doble factor. Bloquear a un usuario corta su acceso de inmediato.">
-        <button className="btn" onClick={() => setNuevo({ nombre: "", correo: "", password: "", rol: "cajero", localId: "", etiqueta: "caja 1" })}>Nuevo usuario</button>
+        <button className="btn" onClick={() => setNuevo({ nombre: "", correo: "", password: "", rol: "comercio", localId: "", etiqueta: "Cuenta del comercio" })}>Nuevo usuario</button>
       </Cabecera>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
         <div className="segmentado">{ROLES.map(([v, t]) => <button key={v} className={rol === v ? "on" : ""} onClick={() => setRol(v)}>{t}</button>)}</div>
@@ -70,20 +70,19 @@ export default function Usuarios() {
             <label className="campo">
               <span>Rol</span>
               <select value={nuevo.rol} onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value })}>
-                <option value="cajero">Cajero de local</option><option value="gerente">Gerente de local</option>
+                <option value="comercio">Comercio (cuenta del negocio)</option>
                 <option value="admin">Super admin</option><option value="marketing">Marketing</option><option value="analista">Analista</option>
               </select>
             </label>
-            {["cajero", "gerente"].includes(nuevo.rol) && (
+            {nuevo.rol === "comercio" && (
               <>
                 <label className="campo">
-                  <span>Local</span>
+                  <span>Comercio</span>
                   <select required value={nuevo.localId} onChange={(e) => setNuevo({ ...nuevo, localId: e.target.value })}>
                     <option value="">Elige…</option>
                     {plano?.locales.map((l: any) => <option key={l.id} value={l.id}>{l.nombre} · {l.numero_local}</option>)}
                   </select>
                 </label>
-                <label className="campo"><span>Etiqueta</span><input value={nuevo.etiqueta} onChange={(e) => setNuevo({ ...nuevo, etiqueta: e.target.value })} placeholder="caja 3" /></label>
               </>
             )}
             <Mensajes error={a.error} />

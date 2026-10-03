@@ -24,6 +24,7 @@ const ITEMS: ItemNav[] = [
   { href: "/admin/promociones", texto: "Promociones", grupo: "Programa", roles: ["admin", "marketing"] },
   { href: "/admin/categorias", texto: "Categorías y destacados", grupo: "Programa", roles: ["admin", "marketing"] },
   { href: "/admin/drops", texto: "Drops y hitos AR", grupo: "Programa", roles: ["admin", "marketing"] },
+  { href: "/admin/eventos", texto: "Eventos del Paseo", grupo: "Programa", roles: ["admin", "marketing"] },
 ];
 
 export default function LayoutAdmin({ children }: { children: React.ReactNode }) {

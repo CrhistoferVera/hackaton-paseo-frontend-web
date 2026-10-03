@@ -6,9 +6,9 @@ import { api, urlArchivo } from "@/lib/api";
 import { bs } from "@/lib/formato";
 import { useAccion, useDatos } from "@/lib/use-datos";
 
-const VACIO = { id: "", nombre: "", descripcion: "", precioBs: "", stock: "", categoriaId: "", fotoUrl: "", activo: true };
+const VACIO = { id: "", nombre: "", descripcion: "", precioBs: "", stock: "", categoriaId: "", fotoUrl: "", activo: true, tiempo: "", etiquetas: "" };
 
-/** HU-Y13: el gerente administra el catálogo PaseoYa de su local. */
+/** HU-Y13: el comercio administra su catálogo PaseoYa. */
 export default function Productos() {
   const { datos, recargar } = useDatos<any[]>("/local/productos");
   const { datos: categorias } = useDatos<any[]>("/recinto/categorias");
@@ -19,7 +19,7 @@ export default function Productos() {
   const abrir = (p?: any) =>
     setF(
       p
-        ? { id: p.id, nombre: p.nombre, descripcion: p.descripcion, precioBs: String(p.precio_bs), stock: String(p.stock), categoriaId: p.categoria_id, fotoUrl: p.foto_url ?? "", activo: p.activo }
+        ? { id: p.id, nombre: p.nombre, descripcion: p.descripcion, precioBs: String(p.precio_bs), stock: String(p.stock), categoriaId: p.categoria_id, fotoUrl: p.foto_url ?? "", activo: p.activo, tiempo: p.tiempo_preparacion_min == null ? "" : String(p.tiempo_preparacion_min), etiquetas: (p.etiquetas ?? []).join(", ") }
         : { ...VACIO, categoriaId: local?.categoria_id ?? "" },
     );
 
@@ -32,7 +32,10 @@ export default function Productos() {
 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
-    const cuerpo = { nombre: f.nombre, descripcion: f.descripcion, precioBs: Number(f.precioBs), stock: Number(f.stock), categoriaId: f.categoriaId, fotoUrl: f.fotoUrl || null, activo: f.activo };
+    const cuerpo = { nombre: f.nombre, descripcion: f.descripcion, precioBs: Number(f.precioBs), stock: Number(f.stock), categoriaId: f.categoriaId, fotoUrl: f.fotoUrl || null, activo: f.activo,
+      tiempoPreparacionMin: f.tiempo === "" ? null : Number(f.tiempo),
+      etiquetas: f.etiquetas.split(",").map((x: string) => x.trim()).filter((x: string) => x.length >= 2),
+    };
     const r = await a.ejecutar(() => (f.id ? api(`/local/productos/${f.id}`, { metodo: "PATCH", cuerpo }) : api("/local/productos", { cuerpo })), "Producto guardado");
     if (r) {
       setF(null);
@@ -41,6 +44,7 @@ export default function Productos() {
   }
 
   async function eliminar() {
+    if (!confirm(`¿Eliminar «${f.nombre}» de PaseoYa?`)) return;
     const r: any = await a.ejecutar(() => api(`/local/productos/${f.id}`, { metodo: "DELETE" }));
     if (r) {
       a.setExito(r.desactivado ? "El producto tiene pedidos: lo desactivamos en lugar de borrarlo." : "Producto eliminado");
@@ -51,7 +55,7 @@ export default function Productos() {
 
   return (
     <>
-      <Cabecera ceja="PaseoYa" titulo="Productos de tu local" descripcion="Lo que publiques aquí aparece en el buscador global de PaseoYa con precio, stock y ubicación.">
+      <Cabecera ceja="PaseoYa" titulo="Productos de tu local" descripcion="Agrega, edita o elimina tus productos. Lo que publiques aparece en el buscador de PaseoYa y Jarvis lo recomienda con precio, stock, tiempo de preparación y ubicación.">
         <button className="btn" onClick={() => abrir()}>Nuevo producto</button>
       </Cabecera>
       <Mensajes exito={!f ? a.exito : null} />
@@ -59,7 +63,7 @@ export default function Productos() {
         <div className="vacio">Todavía no publicaste productos.</div>
       ) : (
         <table className="libro">
-          <thead><tr><th /><th>Producto</th><th>Categoría</th><th className="der">Precio</th><th className="der">Stock</th><th>Estado</th></tr></thead>
+          <thead><tr><th /><th>Producto</th><th>Categoría</th><th className="der">Precio</th><th className="der">Stock</th><th className="der">Preparación</th><th>Estado</th></tr></thead>
           <tbody>
             {datos.map((p) => (
               <tr key={p.id} className="clic" onClick={() => abrir(p)}>
@@ -70,6 +74,7 @@ export default function Productos() {
                 <td>{p.categoria}</td>
                 <td className="der">{bs(p.precio_bs)}</td>
                 <td className="der">{p.stock === 0 ? <span className="etiqueta alerta">Agotado</span> : p.stock}</td>
+                <td className="der">{p.tiempo_preparacion_min != null ? `${p.tiempo_preparacion_min} min` : "—"}</td>
                 <td>{p.activo ? <span className="etiqueta exito">Publicado</span> : <span className="etiqueta tenue">Oculto</span>}</td>
               </tr>
             ))}
@@ -86,6 +91,11 @@ export default function Productos() {
               <label className="campo"><span>Precio (Bs)</span><input required type="number" min="0.5" step="0.5" value={f.precioBs} onChange={(e) => setF({ ...f, precioBs: e.target.value })} /></label>
               <label className="campo"><span>Stock</span><input required type="number" min="0" value={f.stock} onChange={(e) => setF({ ...f, stock: e.target.value })} /></label>
             </div>
+            <div className="fila-campos">
+              <label className="campo"><span>Preparación (minutos)</span><input type="number" min="0" max="240" value={f.tiempo} onChange={(e) => setF({ ...f, tiempo: e.target.value })} placeholder="Solo si se prepara al momento" /></label>
+              <label className="campo"><span>Etiquetas</span><input value={f.etiquetas} onChange={(e) => setF({ ...f, etiquetas: e.target.value })} placeholder="picante, vegetariano, para compartir" /></label>
+            </div>
+            <p className="muted" style={{ fontSize: 13, margin: 0 }}>Jarvis usa el tiempo de preparación para responder «¿cuánto tarda?» y avisar cuándo pasar a recoger.</p>
             <label className="campo">
               <span>Categoría</span>
               <select required value={f.categoriaId} onChange={(e) => setF({ ...f, categoriaId: e.target.value })}>

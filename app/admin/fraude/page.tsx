@@ -39,7 +39,7 @@ export default function Fraude() {
       {!datos ? <Cargando /> : !datos.length ? <div className="vacio">No hay alertas en este estado.</div> : (
         <div className="tabla-envoltura">
           <table className="libro">
-            <thead><tr><th>Puntaje</th><th>Regla</th><th>Detalle</th><th>Local · cajero</th><th>Cliente</th><th className="der">Monto</th><th>Fecha</th><th /></tr></thead>
+            <thead><tr><th>Puntaje</th><th>Regla</th><th>Detalle</th><th>Comercio</th><th>Cliente</th><th className="der">Monto</th><th>Fecha</th><th /></tr></thead>
             <tbody>
               {datos.map((x) => (
                 <tr key={x.id}>
@@ -51,7 +51,7 @@ export default function Fraude() {
                   </td>
                   <td><span className="etiqueta alerta">{REGLA_FRAUDE[x.regla] ?? x.regla}</span></td>
                   <td style={{ maxWidth: 340 }}>{x.detalle}</td>
-                  <td>{x.local ?? "—"}<small>{x.cajero ?? ""}</small></td>
+                  <td>{x.local ?? "—"}</td>
                   <td>{x.cliente ?? "—"}</td>
                   <td className="der">{x.monto_bs ? bs(x.monto_bs) : "—"}</td>
                   <td className="num">{fechaHora(x.creado_en)}</td>

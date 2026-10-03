@@ -54,7 +54,7 @@ function Formulario() {
         <>
           <label className="campo">
             <span>Correo</span>
-            <input autoFocus autoComplete="username" value={identificador} onChange={(e) => setIdentificador(e.target.value)} placeholder="cajero.cafealameda@paseo.bo" required />
+            <input autoFocus autoComplete="username" value={identificador} onChange={(e) => setIdentificador(e.target.value)} placeholder="comercio.cafealameda@paseo.bo" required />
           </label>
           <label className="campo">
             <span>Contraseña</span>
@@ -105,7 +105,7 @@ export default function Login() {
           <Formulario />
         </Suspense>
         <p className="muted" style={{ fontSize: 13, marginTop: 32 }}>
-          Cajeros y gerentes entran a la caja de su local. Administración, marketing y analistas entran al Centro de Inteligencia con doble factor.
+          Cada comercio entra a su panel con la cuenta de su negocio. Administración, marketing y analistas entran al Centro de Inteligencia con doble factor.
         </p>
       </section>
       <style>{`@media (max-width: 860px){ .login { grid-template-columns: 1fr !important; } .login > section:first-child { padding: 32px 20px !important; } }`}</style>

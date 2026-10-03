@@ -48,6 +48,9 @@ export default function JarvisAdmin() {
             {datos.disponibilidad.map((m: any) => (
               <Indicador key={m.motor} etiqueta={m.motor} valor={m.disponible ? "Activo" : "Apagado"} detalle={m.motor.startsWith("ollama") ? "Modelo local" : "Nube, opcional"} oro={m.disponible} />
             ))}
+            {datos.oido && (
+              <Indicador etiqueta="Reconocimiento de voz" valor={datos.oido.listo ? "Activo" : datos.oido.activo ? "Cargando" : "Apagado"} detalle={`${datos.oido.modelo.split("/").pop()} · local`} oro={datos.oido.listo} />
+            )}
             <Indicador etiqueta="Órdenes de voz · 7 días" valor={entero(total)} />
             <Indicador etiqueta="Latencia del modelo local" valor={local ? `${entero(local.latencia_mediana)} ms` : "—"} detalle={local ? `mediana · ${entero(local.ordenes)} órdenes` : "sin datos"} />
           </div>

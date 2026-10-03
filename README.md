@@ -14,18 +14,22 @@ Abre `http://localhost:3000`. La API (`hackaton-paseo-backend`) debe estar corri
 
 ## Pantallas por rol
 
-### Cajero y gerente (`/local`)
+### Panel de comercio (`/comercio`)
 
-| Ruta | Historias |
+Una sola cuenta por negocio (rol `comercio`, por ejemplo `comercio.napolipizzeria@paseo.bo`) que maneja todo:
+
+| Ruta | Qué hace |
 | --- | --- |
-| `/local/caja` | HU-L02 escanear el pase e ingresar el monto · HU-L03 identificar por celular y código · cola sin conexión (RNF-08) |
-| `/local/cupones` | HU-L04 validar el cupón de canje |
-| `/local/pedidos` | HU-Y14 bandeja en tiempo real · HU-Y15 entregar con QR o PIN |
-| `/local/movimientos` | HU-L06 movimientos por fecha y cajero, exportar CSV |
-| `/local/panel` | HU-L08 panel · HU-L09 ranking · HU-L12 categorías · HU-Y16 ventas PaseoYa |
-| `/local/productos` | HU-Y13 productos PaseoYa (gerente) |
-| `/local/promociones` | HU-L11 promociones para horas flojas (gerente) |
-| `/local/qr` | HU-L07 QR de la puerta en PDF (gerente) |
+| `/comercio/caja` | HU-L02 escanear el pase e ingresar el monto · HU-L03 identificar por celular y código · cola sin conexión (RNF-08) |
+| `/comercio/cupones` | HU-L04 validar el cupón de canje |
+| `/comercio/pedidos` | HU-Y14 bandeja en tiempo real · HU-Y15 entregar con QR o PIN |
+| `/comercio/productos` | HU-Y13 agregar, editar y eliminar productos PaseoYa, con stock, tiempo de preparación y etiquetas (Jarvis los usa) |
+| `/comercio/promociones` | HU-L11 crear promociones; retirar las pendientes o terminar hoy las aprobadas |
+| `/comercio/drops` | Pedir un Drop (producto, precio especial, zona, fecha, duración, unidades) y seguir su estado |
+| `/comercio/eventos` | Proponer eventos (degustación, taller, lanzamiento…); al aprobarse aparecen en la app y Jarvis los recomienda |
+| `/comercio/movimientos` | HU-L06 movimientos por fecha, exportar CSV |
+| `/comercio/panel` | HU-L08 panel · HU-L09 ranking · HU-L12 categorías · HU-Y16 ventas PaseoYa |
+| `/comercio/qr` | HU-L07 QR de la puerta en PDF |
 
 ### Administración, marketing y analista (`/admin`)
 
@@ -51,7 +55,8 @@ Abre `http://localhost:3000`. La API (`hackaton-paseo-backend`) debe estar corri
 | `/admin/misiones` | HU-A05 constructor de misiones |
 | `/admin/promociones` | HU-A06 aprobar promociones |
 | `/admin/categorias` | HU-Y17 categorías · HU-Y19 destacados |
-| `/admin/drops` | Drops y hitos AR |
+| `/admin/eventos` | Agenda de eventos: crear, aprobar o rechazar propuestas de comercios, cancelar |
+| `/admin/drops` | Drops y hitos AR · aprobar y lanzar las solicitudes de Drop de los comercios |
 
 ## Estructura
 

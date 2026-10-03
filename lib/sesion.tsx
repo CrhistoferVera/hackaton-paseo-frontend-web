@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { api, guardarToken, leerToken } from "./api";
 
-export type Rol = "cliente" | "cajero" | "gerente" | "admin" | "marketing" | "analista";
+export type Rol = "cliente" | "comercio" | "admin" | "marketing" | "analista";
 export interface Usuario {
   id: string;
   rol: Rol;
@@ -75,6 +75,6 @@ export function ProveedorSesion({ children }: { children: React.ReactNode }) {
 
 export const useSesion = () => useContext(Ctx);
 
-export const ES_LOCAL = (r?: Rol) => r === "cajero" || r === "gerente";
+export const ES_COMERCIO = (r?: Rol) => r === "comercio";
 export const ES_INTERNO = (r?: Rol) => r === "admin" || r === "marketing" || r === "analista";
-export const destinoDe = (r: Rol) => (ES_LOCAL(r) ? "/local/caja" : ES_INTERNO(r) ? "/admin/centro" : "/login?cliente=1");
+export const destinoDe = (r: Rol) => (ES_COMERCIO(r) ? "/comercio/caja" : ES_INTERNO(r) ? "/admin/centro" : "/login?cliente=1");

@@ -4,17 +4,14 @@ import { useState } from "react";
 import { Barras, Linea } from "@/components/graficos";
 import { Cabecera, Cargando, Indicador, Seccion } from "@/components/marco";
 import { bs, entero, fecha, pct } from "@/lib/formato";
-import { useSesion } from "@/lib/sesion";
 import { useDatos } from "@/lib/use-datos";
 
 /** HU-L08 (panel), HU-L09 (ranking), HU-L12 (categorías) y HU-Y16 (ventas PaseoYa). */
 export default function Panel() {
-  const { usuario } = useSesion();
-  const gerente = usuario?.rol === "gerente";
   const [dias, setDias] = useState(30);
   const { datos: p } = useDatos<any>(`/local/panel?dias=${dias}`);
-  const { datos: ranking } = useDatos<any>(gerente ? `/local/panel/ranking?dias=90` : null);
-  const { datos: cats } = useDatos<any[]>(gerente ? `/local/panel/categorias?dias=${dias}` : null);
+  const { datos: ranking } = useDatos<any>(`/local/panel/ranking?dias=90`);
+  const { datos: cats } = useDatos<any[]>(`/local/panel/categorias?dias=${dias}`);
   const { datos: py } = useDatos<any>(`/local/paseoya/ventas?dias=${dias}`);
 
   const horas = Array.from({ length: 24 }, (_, h) => ({ hora: `${h}`, compras: p?.horas?.find((x: any) => x.hora === h)?.compras ?? 0 })).filter((x) => Number(x.hora) >= 8);
@@ -22,7 +19,7 @@ export default function Panel() {
 
   return (
     <>
-      <Cabecera ceja="Mi local" titulo="Panel de clientes y ventas" descripcion="Lo que la app te trae: clientes únicos, nuevos contra recurrentes, ticket promedio y horas pico.">
+      <Cabecera ceja="Resultados" titulo="Panel de clientes y ventas" descripcion="Lo que la app te trae: clientes únicos, nuevos contra recurrentes, ticket promedio y horas pico.">
         <div className="segmentado">
           {[7, 30, 90].map((d) => (
             <button key={d} className={dias === d ? "on" : ""} onClick={() => setDias(d)}>{d} días</button>
@@ -55,7 +52,7 @@ export default function Panel() {
         </>
       )}
 
-      {gerente && ranking && (
+      {ranking && (
         <div className="dos-col">
           <Seccion titulo="Mejores clientes por gasto">
             <TablaRanking filas={ranking.porGasto} />
@@ -65,10 +62,10 @@ export default function Panel() {
           </Seccion>
         </div>
       )}
-      {gerente && <p className="muted" style={{ fontSize: 13 }}>El nombre aparece solo si el cliente lo autorizó en su app; si no, ves un alias estable.</p>}
+      <p className="muted" style={{ fontSize: 13 }}>El nombre aparece solo si el cliente lo autorizó en su app; si no, ves un alias estable.</p>
 
       <div className="dos-col">
-        {gerente && (
+        {(
           <Seccion titulo="Categorías más vendidas con la app">
             {!cats?.length ? <div className="vacio">Sin datos.</div> : (
               <table className="libro">
