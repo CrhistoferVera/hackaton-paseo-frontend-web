@@ -55,6 +55,8 @@ Una sola cuenta por negocio (rol `comercio`, por ejemplo `comercio.napolipizzeri
 | `/admin/misiones` | HU-A05 constructor de misiones |
 | `/admin/promociones` | HU-A06 aprobar promociones |
 | `/admin/categorias` | HU-Y17 categorías · HU-Y19 destacados |
+| `/admin/asistente` | Asistente de datos con memoria: tablas, gráficos y acciones de un clic (crear promociones, regenerar ofertas) |
+| `/admin/ofertas` | Ofertas personales de la IA y equidad del flujo: Gini, locales sub y sobre atendidos, ajustes (peso de equidad, ofertas por cliente) |
 | `/admin/eventos` | Agenda de eventos: crear, aprobar o rechazar propuestas de comercios, cancelar |
 | `/admin/drops` | Drops y hitos AR · aprobar y lanzar las solicitudes de Drop de los comercios |
 

@@ -13,6 +13,7 @@ export default function Panel() {
   const { datos: ranking } = useDatos<any>(`/local/panel/ranking?dias=90`);
   const { datos: cats } = useDatos<any[]>(`/local/panel/categorias?dias=${dias}`);
   const { datos: py } = useDatos<any>(`/local/paseoya/ventas?dias=${dias}`);
+  const { datos: of } = useDatos<any>('/local/ofertas');
 
   const horas = Array.from({ length: 24 }, (_, h) => ({ hora: `${h}`, compras: p?.horas?.find((x: any) => x.hora === h)?.compras ?? 0 })).filter((x) => Number(x.hora) >= 8);
   const pico = p?.horas?.length ? [...p.horas].sort((a: any, b: any) => b.compras - a.compras)[0] : null;
@@ -26,6 +27,13 @@ export default function Panel() {
           ))}
         </div>
       </Cabecera>
+      {of?.hoy?.ofertas > 0 && (
+        <div className="aviso" style={{ marginBottom: 20 }}>
+          <b>Ofertas de la IA para tu negocio:</b> hoy {entero(of.hoy.ofertas)} clientes recibieron una oferta personal de puntos multiplicados para venir a tu local
+          {of.hoy.desde ? ` (entre las ${String(of.hoy.desde).slice(0, 5)} y las ${String(of.hoy.hasta).slice(0, 5)}, tus horas más tranquilas)` : ""}; ya se usaron {entero(of.hoy.usadas)}.
+          {" "}En 14 días: {entero(of.serie.reduce((a: number, d: any) => a + d.usadas, 0))} visitas por ofertas. La IA reparte el público entre todos los locales, sin costo para ti.
+        </div>
+      )}
       {!p ? (
         <Cargando />
       ) : (

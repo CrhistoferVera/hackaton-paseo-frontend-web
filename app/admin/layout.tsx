@@ -4,6 +4,8 @@ import { Marco, type ItemNav } from "@/components/marco";
 
 const ITEMS: ItemNav[] = [
   { href: "/admin/centro", texto: "Gemelo digital", grupo: "Centro de Inteligencia" },
+  { href: "/admin/asistente", texto: "Asistente de datos", grupo: "Centro de Inteligencia" },
+  { href: "/admin/ofertas", texto: "Ofertas IA y equidad", grupo: "Centro de Inteligencia" },
   { href: "/admin/horarios", texto: "Días y horarios", grupo: "Centro de Inteligencia" },
   { href: "/admin/segmentos", texto: "Clientes y segmentos", grupo: "Centro de Inteligencia" },
   { href: "/admin/afinidad", texto: "Cruce de compras", grupo: "Centro de Inteligencia" },
