@@ -193,3 +193,159 @@ table.libro small { display: block; color: var(--grafito); font-size: 12px; }
 @keyframes latido { 50% { opacity: .25; } }
 .vivo::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 7px; animation: latido 2s ease-in-out infinite; vertical-align: middle; }
 @media (prefers-reduced-motion: reduce) { .acunacion, .vivo::before { animation: none; } }
+
+
+/* Administración: carbón, ámbar y una jerarquía hecha para operar el Paseo. */
+.marco-admin {
+  --papel: #121212; --veladura: #1a1a1a; --tinta: #ffffff; --grafito: #a3a3a3;
+  --linea: #303030; --linea-fuerte: #525252; --oro: #f4b41a; --oro-brillo: #f4b41a;
+  --alerta: #e89a8d; --exito: #a7c3ac;
+  --sala: #121212; --sala-panel: #1a1a1a; --sala-tinta: #ffffff; --sala-grafito: #a3a3a3; --sala-linea: #303030; --sala-oro: #f4b41a;
+  background: var(--papel); color: var(--tinta); color-scheme: dark;
+  grid-template-columns: 248px minmax(0, 1fr);
+}
+.marco-admin .contenido { padding: 38px clamp(24px, 3.6vw, 60px) 72px; }
+.marco-admin .lateral { background: #1a1a1a; padding-top: 28px; }
+.marco-admin .marca b { font-size: 25px; line-height: 1.18; margin: 12px 0 8px; }
+.marco-admin .senal, .marco-admin .btn, .marco-admin .campo > span, .marco-admin .libro th,
+.marco-admin .segmentado button, .marco-admin .etiqueta {
+  text-transform: none; letter-spacing: 0; font-family: var(--f-texto), sans-serif;
+}
+.marco-admin .senal { font-size: 12px; font-weight: 500; }
+.marco-admin .lateral nav .grupo { padding-top: 22px; font-size: 11px; color: #999; }
+.marco-admin .lateral nav a { padding: 9px 22px; font-size: 13px; }
+.marco-admin .lateral nav a.activo { background: #242424; color: #fff; border-left-color: var(--oro); }
+.marco-admin .lateral nav a.nav-ia { margin: 4px 14px 6px; padding: 14px 12px; background: var(--oro); color: #121212; border: 1px solid var(--oro); border-radius: 4px; font-weight: 600; }
+.marco-admin .nav-ia .etiqueta { color: #121212; border-color: #12121280; font-size: 11px; }
+.menu-admin { display: none; }
+.marco-admin h1.titulo { font-size: clamp(30px, 3.2vw, 46px); line-height: 1.12; }
+.marco-admin .cabecera { align-items: center; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--linea); }
+.marco-admin .cabecera .ceja { display: none; }
+.marco-admin .cabecera p { font-size: 14px; max-width: 68ch; line-height: 1.65; }
+.marco-admin .btn { border-radius: 4px; background: var(--oro); border-color: var(--oro); color: #121212; font-size: 13px; min-height: 42px; font-weight: 600; }
+.marco-admin .btn:hover { background: #ffc847; border-color: #ffc847; }
+.marco-admin .btn.claro { background: transparent; border-color: var(--linea-fuerte); color: #fff; }
+.marco-admin .btn.claro:hover { background: #282828; }
+.marco-admin .btn.peligro { background: #6e3028; border-color: #975448; color: #fff; }
+.marco-admin .btn.chico { min-height: 34px; font-size: 12px; padding: 6px 11px; }
+.marco-admin .campo > span { font-size: 12px; color: #ccc; font-weight: 500; }
+.marco-admin .campo input, .marco-admin .campo select, .marco-admin .campo textarea,
+.marco-admin .entrada { background: #1a1a1a; color: #fff; border: 1px solid #525252; border-radius: 4px; padding: 10px 12px; font: inherit; width: 100%; min-height: 42px; }
+.marco-admin input[type="checkbox"], .marco-admin input[type="range"] { accent-color: var(--oro); }
+.marco-admin .campo input[type="range"] { padding: 0; border: 0; background: transparent; }
+.marco-admin .campo :focus-visible, .marco-admin .entrada:focus-visible { outline: 2px solid var(--oro); outline-offset: 3px; }
+.marco-admin .segmentado { border: 0; border-bottom: 1px solid var(--linea); border-radius: 0; overflow: visible; flex-wrap: wrap; gap: 4px; }
+.marco-admin .segmentado button { border: 0; border-bottom: 2px solid transparent; padding: 11px 14px; font-size: 13px; font-weight: 500; color: #a3a3a3; }
+.marco-admin .segmentado button.on { background: transparent; color: var(--oro); border-bottom-color: var(--oro); }
+.marco-admin .segmentado button:hover { color: #fff; }
+.marco-admin .indicadores { border: 0; border-bottom: 1px solid var(--linea); background: transparent; padding: 0 0 22px; margin: 10px 0 28px; }
+.marco-admin .indicador { border: 0; border-right: 1px solid var(--linea); padding: 2px 24px; }
+.marco-admin .indicador:first-child { padding-left: 0; }
+.marco-admin .indicador:last-child { border-right: 0; }
+.marco-admin .indicador .cifra { font-family: var(--f-texto), sans-serif; font-size: clamp(28px, 2.8vw, 38px); font-weight: 500; margin-top: 10px; }
+.marco-admin .indicador small { margin-top: 10px; line-height: 1.6; }
+.marco-admin .seccion { margin-top: 28px; padding: 0; border: 0; background: transparent; min-width: 0; }
+.marco-admin .seccion > header { margin-bottom: 20px; }
+.marco-admin .seccion > header h2 { font-family: var(--f-texto), sans-serif; font-size: 18px; font-weight: 500; }
+.marco-admin h2:not(.display) { font-size: 19px; font-weight: 500; }
+.marco-admin .libro { background: transparent; }
+.marco-admin .libro th { font-size: 12px; font-weight: 500; background: #1a1a1a; color: #ccc; padding: 13px 14px; }
+.marco-admin .libro td { padding: 16px 14px; font-size: 13px; }
+.marco-admin .libro td:first-child, .marco-admin .libro th:first-child { padding-left: 12px; }
+.marco-admin .libro small { max-width: 48ch; margin-top: 4px; }
+.marco-admin .libro tr:hover td { background: #191919; }
+.marco-admin .enlace { color: #fff; text-decoration-color: #8c6b26; }
+.marco-admin .enlace:hover { color: var(--oro); }
+.marco-admin .etiqueta { border-color: #525252; color: #ccc; font-size: 11px; padding: 3px 8px; border-radius: 3px; font-weight: 500; }
+.marco-admin .etiqueta.exito { color: var(--exito); border-color: #506557; }
+.marco-admin .etiqueta.alerta { color: var(--alerta); border-color: #975448; }
+.marco-admin .etiqueta.oro { color: var(--oro); border-color: #816521; }
+.marco-admin .guia-admin { display: grid; grid-template-columns: minmax(130px, .6fr) 2fr; gap: 24px; border: 0; border-left: 2px solid var(--oro); padding: 3px 0 3px 18px; margin: 24px 0 30px; background: transparent; font-size: 13px; }
+.marco-admin .guia-admin strong { color: #ccc; font-weight: 500; }
+.marco-admin .guia-admin p { margin: 0; max-width: 76ch; color: var(--grafito); line-height: 1.65; }
+.marco-admin .desplegable-admin { border: 0; border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea); background: transparent; margin: 12px 0; }
+.marco-admin .desplegable-admin > summary { cursor: pointer; padding: 18px 2px; font-size: 15px; font-weight: 500; }
+.marco-admin .desplegable-admin > div { padding: 8px 0 24px; }
+.marco-admin .admin-toolbar { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; margin: 22px 0; }
+.marco-admin .admin-toolbar .campo { min-width: 160px; flex: 0 1 210px; }
+.marco-admin .dos-col { gap: 32px; align-items: start; }
+.marco-admin .resumen-tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0; margin: 24px 0; }
+.marco-admin .tarjeta-admin { padding: 20px 22px; border: 0; border-left: 1px solid var(--linea); border-bottom: 1px solid var(--linea); background: transparent; }
+.marco-admin .tarjeta-admin:first-child { border-left: 0; }
+.marco-admin .tarjeta-admin h3 { font-size: 18px; font-weight: 500; margin: 8px 0 12px; }
+.marco-admin .tarjeta-admin p { color: var(--grafito); font-size: 13px; line-height: 1.7; }
+.marco-admin .tarjeta-admin .ceja { font-family: var(--f-texto), sans-serif; font-size: 12px; }
+.marco-admin .paginacion, .marco-admin .paginacion > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.marco-admin .paginacion { border-top: 1px solid var(--linea); padding: 18px 0; color: var(--grafito); font-size: 12px; }
+.marco-admin .mapa-admin { padding: 0; border: 0; background: transparent; min-width: 0; }
+.marco-admin .panel-lateral { background: #1a1a1a; box-shadow: none; border-left-color: #525252; width: min(520px, 100vw); padding: 30px; }
+.marco-admin .velo { background: #000a; }
+.marco-admin .aviso.error, .marco-admin .aviso.exito { background: #1a1a1a; }
+.marco-admin .barra > i { background: var(--oro); }
+.marco-admin .asistente-espacio { display: flex; min-height: 62vh; max-width: 1040px; }
+.marco-admin .recharts-cartesian-axis-tick text { fill: #a3a3a3; }
+.marco-admin .recharts-cartesian-grid line { stroke: #303030; }
+.marco-admin .recharts-default-tooltip { background: #1a1a1a !important; border-color: #525252 !important; color: #fff; }
+.marco-admin .recharts-tooltip-label { color: #fff; }
+.marco-admin .recharts-wrapper:focus { outline: none; }
+.marco-admin .mapa-interactivo { border: 1px solid #303030; border-radius: 6px; overflow: hidden; background: #1a1a1a; }
+.mapa-controles { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--linea); font-size: 12px; color: var(--grafito); }
+.mapa-controles > div { display: flex; gap: 8px; align-items: center; }
+.mapa-lienzo { height: 500px; overflow: hidden; position: relative; touch-action: none; cursor: grab; user-select: none; }
+.mapa-lienzo:active { cursor: grabbing; }
+.mapa-transformacion { height: 100%; width: 100%; transform-origin: center; }
+.mapa-transformacion > svg { width: 100%; height: 100%; }
+.mapa-transformacion > svg text { user-select: none; }
+.mapa-escala { min-width: 42px; text-align: center; color: var(--tinta); font-variant-numeric: tabular-nums; }
+.mapa-resumen { display: flex; gap: 24px; align-items: baseline; flex-wrap: wrap; margin: 18px 0; font-size: 13px; color: var(--grafito); }
+.mapa-resumen strong { color: #fff; font-weight: 500; }
+.edificio-presentacion { padding: 28px 0; }
+.edificio-presentacion h1 { max-width: 18ch; font-family: var(--f-display), serif; font-size: clamp(38px, 5vw, 68px); font-weight: 500; line-height: 1.07; margin: 0 0 20px; }
+.edificio-presentacion > p { max-width: 64ch; color: var(--grafito); font-size: 15px; line-height: 1.7; }
+.edificio-silueta { width: 100%; display: block; }
+.edificio-directorio { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+.edificio-directorio button { flex: 1 1 160px; text-align: left; background: transparent; color: #ccc; border: 0; border-top: 2px solid #303030; padding: 14px 12px; cursor: pointer; }
+.edificio-directorio button[aria-pressed="true"] { border-color: var(--oro); color: #fff; }
+.edificio-directorio strong, .edificio-directorio span { display: block; }
+.edificio-directorio span { margin-top: 8px; font-size: 12px; color: var(--grafito); }
+.edificio-detalle { display: flex; gap: 32px; justify-content: space-between; flex-wrap: wrap; border-top: 1px solid var(--linea); padding-top: 24px; }
+.edificio-detalle h2 { margin-top: 0; }
+.edificio-detalle p { color: var(--grafito); max-width: 60ch; }
+.edificio-nombres { display: flex; flex-wrap: wrap; gap: 8px 24px; list-style: none; padding: 0; max-width: 720px; font-size: 13px; color: #ccc; }
+.marco-admin ::selection { background: #735519; color: #fff; }
+@media (max-width: 1100px) { .marco-admin .dos-col { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .marco-admin { grid-template-columns: 1fr; }
+  .marco-admin .lateral { height: auto; position: sticky; top: 0; z-index: 30; padding: 12px 18px; overflow: visible; display: grid; grid-template-columns: 1fr auto; align-items: center; }
+  .marco-admin .lateral .marca { padding: 0; border: 0; }
+  .marco-admin .lateral .marca b { font-family: var(--f-texto), sans-serif; font-size: 16px; margin: 0; }
+  .marco-admin .marca > span { display: none; }
+  .marco-admin .menu-admin { display: inline-flex; }
+  .marco-admin .lateral nav { display: none; grid-column: 1 / -1; max-height: 70vh; overflow: auto; }
+  .marco-admin .lateral nav.menu-abierto { display: grid; }
+  .marco-admin .lateral .pie { display: none; }
+  .marco-admin .lateral:has(.menu-abierto) .pie { display: block; grid-column: 1 / -1; margin-top: 8px; }
+  .marco-admin .contenido { padding: 26px 20px 48px; }
+}
+@media (max-width: 600px) {
+  .marco-admin .cabecera { gap: 20px; }
+  .marco-admin .indicadores { grid-template-columns: 1fr; gap: 16px; }
+  .marco-admin .indicador { padding: 0 0 16px; border-right: 0; border-bottom: 1px solid var(--linea); }
+  .marco-admin .indicador:last-child { border-bottom: 0; padding-bottom: 0; }
+  .marco-admin .guia-admin { grid-template-columns: 1fr; gap: 8px; }
+  .marco-admin .resumen-tarjetas { grid-template-columns: 1fr; }
+  .marco-admin .tarjeta-admin { border-left: 0; padding: 20px 0; }
+  .marco-admin .paginacion > div { width: 100%; }
+  .mapa-lienzo { height: 380px; }
+  .mapa-controles { align-items: start; }
+  .mapa-controles > span { max-width: 28ch; }
+  .marco-admin .admin-toolbar .campo { flex: 1 1 130px; min-width: 130px; }
+}
+@media (prefers-reduced-motion: reduce) { .marco-admin *, .marco-admin *::before { animation: none !important; scroll-behavior: auto !important; } }
+
+.marco-admin .objeto { background: #1a1a1a; }
+.marco-admin .panel-lateral dl { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; font-size: 13px; }
+.marco-admin .panel-lateral dt { color: #a3a3a3; }
+.marco-admin .panel-lateral dd { margin: 0; }
+
+.edificio-detalle { align-items: flex-start; }

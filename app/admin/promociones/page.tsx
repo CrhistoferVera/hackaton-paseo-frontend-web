@@ -1,6 +1,7 @@
 "use client";
 
 import { useTiempoReal } from "@/lib/tiempo-real";
+import { Guia, ListaPaginada } from "@/components/admin-ui";
 import { useState } from "react";
 import { Cabecera, Cargando, Mensajes, PanelLateral } from "@/components/marco";
 import { api } from "@/lib/api";
@@ -17,27 +18,29 @@ export default function Promociones() {
   const { datos: plano } = useDatos<any>("/recinto/plano");
   const [rechazo, setRechazo] = useState<{ id: string; comentario: string } | null>(null);
   const [nueva, setNueva] = useState<any | null>(null);
+  const [revision, setRevision] = useState(false);
+  const [aprobacion, setAprobacion] = useState<{id:string; titulo:string; costo:string} | null>(null);
   const a = useAccion();
   useTiempoReal({ promociones: () => void recargar(), catalogo: () => void recargar(), connect: () => void recargar() });
 
-  async function revisar(id: string, e: "aprobada" | "rechazada", comentario?: string) {
+  async function revisar(id: string, e: "aprobada" | "rechazada", comentario?: string, costo?: number) {
     const promo = datos?.find(p => p.id===id);
-    let costoPuntos: number | undefined;
-    if (e==='aprobada' && promo?.tipo==='cupon') {
-      const costo = prompt('Costo del cupón en puntos:', String(promo.costo_puntos ?? ''));
-      if (costo===null) return;
-      costoPuntos=Number(costo);
-      if (!Number.isInteger(costoPuntos) || costoPuntos<=0) { a.setError('Indica un costo entero mayor a cero'); return; }
+    const costoPuntos = costo;
+    if (e === 'aprobada' && promo?.tipo === 'cupon' && costo === undefined) {
+      setAprobacion({id, titulo:promo.titulo, costo:String(promo.costo_puntos ?? '')}); return;
     }
+    if (costo !== undefined && (!Number.isInteger(costo) || costo <= 0)) { a.setError('Indica un costo entero mayor a cero'); return; }
     const r = await a.ejecutar(() => api(`/admin/promociones/${id}/revision`, { cuerpo: { estado: e, comentario, costoPuntos } }), e === "aprobada" ? "Aprobada y visible en la app" : "Rechazada; el local recibió tu comentario");
     if (r) {
       setRechazo(null);
+      setAprobacion(null);
       void recargar();
     }
   }
 
   async function crear(e: React.FormEvent) {
     e.preventDefault();
+    if (!revision) { setRevision(true); return; }
     const r = await a.ejecutar(() => api("/admin/promociones", { cuerpo: { ...nueva, multiplicador: Number(nueva.multiplicador), costoPuntos:nueva.tipo==='cupon' ? Number(nueva.costoPuntos) : undefined, localId: nueva.localId || null, segmentoId: nueva.segmentoId || null } }), "Promoción publicada");
     if (r) {
       setNueva(null);
@@ -49,14 +52,15 @@ export default function Promociones() {
     <>
       <Cabecera ceja="Programa" titulo="Promociones" descripcion="Los locales proponen; el Paseo aprueba. También puedes crear promociones dirigidas a un segmento.">
         <div className="segmentado">{[["pendiente", "Por revisar"], ["aprobada", "Aprobadas"], ["rechazada", "Rechazadas"], ["", "Todas"]].map(([v, t]) => <button key={v} className={estado === v ? "on" : ""} onClick={() => setEstado(v)}>{t}</button>)}</div>
-        <button className="btn" onClick={() => setNueva({ titulo: "", tipo: "puntos_dobles", multiplicador: 2, costoPuntos: "", descripcion: "", localId: "", segmentoId: "", diasSemana: [0, 1, 2, 3, 4, 5, 6], horaInicio: "10:00", horaFin: "22:00", inicio: hoyIso(), fin: diasAtrasIso(-14) })}>Nueva promoción</button>
+        <button className="btn" onClick={() => { setRevision(false); setNueva({ titulo: "", tipo: "puntos_dobles", multiplicador: 2, costoPuntos: "", descripcion: "", localId: "", segmentoId: "", diasSemana: [0, 1, 2, 3, 4, 5, 6], horaInicio: "10:00", horaFin: "22:00", inicio: hoyIso(), fin: diasAtrasIso(-14) }); }}>Nueva promoción</button>
       </Cabecera>
+      <Guia titulo="Del beneficio a la publicación">Define la promoción, revisa su vista previa y confirma la publicación. Las propuestas de comercios llegan a la bandeja Por revisar.</Guia>
       <Mensajes error={a.error} exito={a.exito} />
       {!datos ? <Cargando /> : !datos.length ? <div className="vacio">No hay promociones en este estado.</div> : (
-        <table className="libro">
+        <ListaPaginada<any> key={estado} datos={datos} nombre="promociones">{filas => (<table className="libro">
           <thead><tr><th>Promoción</th><th>Local</th><th>Cuándo</th><th>Segmento</th><th>Enviada</th><th /></tr></thead>
           <tbody>
-            {datos.map((p) => (
+            {filas.map((p) => (
               <tr key={p.id}>
                 <td>{p.titulo}{p.tipo==="cupon" && p.estado==="aprobada" && !p.costo_puntos && <button className="btn chico" onClick={() => revisar(p.id,"aprobada")}>Definir costo del canje</button>}<small>{p.tipo === "puntos_dobles" ? `Puntos ×${Number(p.multiplicador)}` : "Cupón"} · {p.descripcion}</small>{p.comentario && <small>Comentario: {p.comentario}</small>}</td>
                 <td>{p.local ?? "Todo el Paseo"}</td>
@@ -74,8 +78,11 @@ export default function Promociones() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table>)}</ListaPaginada>
       )}
+      <PanelLateral abierto={!!aprobacion} titulo="Revisar costo del cupón" onCerrar={() => setAprobacion(null)}>
+        {aprobacion && <form onSubmit={e => {e.preventDefault(); void revisar(aprobacion.id, 'aprobada', undefined, Number(aprobacion.costo));}} style={{display:'grid',gap:20}}><h3>{aprobacion.titulo}</h3><p className="muted">Este costo se mostrará al cliente cuando canjee la promoción.</p><label className="campo"><span>Costo en puntos</span><input required type="number" min="1" step="1" value={aprobacion.costo} onChange={e=>setAprobacion({...aprobacion,costo:e.target.value})} /></label><Mensajes error={a.error} /><button className="btn" disabled={a.enviando}>Aprobar y publicar</button></form>}
+      </PanelLateral>
       <PanelLateral abierto={!!rechazo} titulo="Rechazar promoción" onCerrar={() => setRechazo(null)}>
         {rechazo && (
           <form onSubmit={(e) => { e.preventDefault(); void revisar(rechazo.id, "rechazada", rechazo.comentario); }} style={{ display: "grid", gap: 14 }}>
@@ -87,12 +94,13 @@ export default function Promociones() {
       <PanelLateral abierto={!!nueva} titulo="Nueva promoción del Paseo" onCerrar={() => setNueva(null)}>
         {nueva && (
           <form onSubmit={crear} style={{ display: "grid", gap: 14 }}>
+            <div hidden={revision} style={{display:revision ? "none" : "grid",gap:14}}>
             <label className="campo"><span>Título</span><input required value={nueva.titulo} onChange={(e) => setNueva({ ...nueva, titulo: e.target.value })} /></label>
             {nueva.tipo==="cupon" && <label className="campo"><span>Costo del cupón (puntos)</span><input required type="number" min="1" step="1" value={nueva.costoPuntos} onChange={e => setNueva({...nueva,costoPuntos:e.target.value})} /></label>}
             <label className="campo"><span>Descripción</span><input value={nueva.descripcion} onChange={(e) => setNueva({ ...nueva, descripcion: e.target.value })} /></label>
             <div className="fila-campos">
               <label className="campo"><span>Tipo</span><select value={nueva.tipo} onChange={(e) => setNueva({ ...nueva, tipo: e.target.value })}><option value="puntos_dobles">Puntos multiplicados</option><option value="cupon">Cupón</option></select></label>
-              <label className="campo"><span>Multiplicador</span><input type="number" step="0.5" min="1" value={nueva.multiplicador} onChange={(e) => setNueva({ ...nueva, multiplicador: e.target.value })} /></label>
+              {nueva.tipo!=="cupon" && <label className="campo"><span>Multiplicador</span><input type="number" step="0.5" min="1" value={nueva.multiplicador} onChange={(e) => setNueva({ ...nueva, multiplicador: e.target.value })} /></label>}
             </div>
             <label className="campo">
               <span>Local</span>
@@ -116,8 +124,10 @@ export default function Promociones() {
               <label className="campo"><span>Inicio</span><input type="date" value={nueva.inicio} onChange={(e) => setNueva({ ...nueva, inicio: e.target.value })} /></label>
               <label className="campo"><span>Fin</span><input type="date" value={nueva.fin} onChange={(e) => setNueva({ ...nueva, fin: e.target.value })} /></label>
             </div>
+            </div>
+            {revision && <article className="tarjeta-admin"><span className="ceja">Vista previa</span><h3>{nueva.titulo}</h3><p>{nueva.descripcion}</p><strong className="cifra oro" style={{fontSize:30}}>{nueva.tipo==='cupon' ? nueva.costoPuntos+' puntos' : 'Puntos ×'+nueva.multiplicador}</strong><p>{plano?.locales.find((l:any)=>l.id===nueva.localId)?.nombre ?? 'Todo el Paseo'}</p><p>{fecha(nueva.inicio)} a {fecha(nueva.fin)}</p><p>{nueva.horaInicio}–{nueva.horaFin}</p><button type="button" className="enlace" onClick={()=>setRevision(false)}>Volver a editar</button></article>}
             <Mensajes error={a.error} />
-            <button className="btn" disabled={a.enviando}>Publicar</button>
+            <button className="btn" disabled={a.enviando}>{revision ? 'Confirmar publicación' : 'Revisar promoción'}</button>
           </form>
         )}
       </PanelLateral>

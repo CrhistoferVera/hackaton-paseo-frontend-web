@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ListaPaginada } from "@/components/admin-ui";
 import { api } from "@/lib/api";
 
 const SUGERENCIAS = ["Resumen de esta semana", "¿Cómo está la equidad del flujo?", "¿Qué debería hacer hoy?", "¿Cómo van las ofertas de la IA?", "¿Qué locales venden menos?", "¿Qué está pendiente de aprobar?"];
@@ -40,9 +41,9 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
   const [enviando, setEnviando] = useState(false);
   const [hechas, setHechas] = useState<Set<string>>(new Set());
   const fin = useRef<HTMLDivElement>(null);
-  const tinta = oscuro ? "#ede6d8" : "#16140f";
-  const gris = oscuro ? "#9a9182" : "#5f594f";
-  const linea = oscuro ? "#2c2821" : "#e4ded3";
+  const tinta = oscuro ? "#ffffff" : "#16140f";
+  const gris = oscuro ? "#a3a3a3" : "#5f594f";
+  const linea = oscuro ? "#303030" : "#e4ded3";
 
   useEffect(() => {
     api<any[]>("/admin/asistente/historial")
@@ -61,7 +62,7 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
     setHilo((h) => [...h, { id: `a${Date.now()}`, rol: "admin", texto: t }]);
     try {
       const r = await api<any>("/admin/asistente", { cuerpo: { pregunta: t } });
-      setHilo((h) => [...h, { id: `i${Date.now()}`, rol: "ia", texto: r.texto, r }]);
+      setHilo((h) => [...h, ...(r.secciones?.length ? r.secciones : [r]).map((parte: any, i: number) => ({ id: `i${Date.now()}-${i}`, rol: "ia" as const, texto: parte.texto, r: parte }))]);
     } catch (e: any) {
       setHilo((h) => [...h, { id: `e${Date.now()}`, rol: "ia", texto: e.message, error: true }]);
     } finally {
@@ -102,33 +103,33 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
             <p key={m.id} className="display" style={{ fontStyle: "italic", fontSize: 16, margin: 0, color: tinta, borderTop: `1px solid ${linea}`, paddingTop: 10 }}>{m.texto}</p>
           ) : (
             <div key={m.id} style={{ display: "grid", gap: 8 }}>
-              <p style={{ margin: 0, fontSize: 13, color: m.error ? "#e0645a" : tinta, lineHeight: 1.5 }}>{m.texto}</p>
+              <p style={{ margin: 0, fontSize: 13, color: m.error ? "#e0645a" : tinta, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{m.texto}</p>
               {m.r?.grafico?.tipo === "linea" && (m.r.serie ?? m.r.tabla?.filas)?.length ? (
                 <div style={{ height: compacto ? 120 : 180 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={(m.r.serie ?? m.r.tabla?.filas ?? []).slice(0, 60)}>
+                    <LineChart data={(m.r.serie ?? m.r.tabla?.filas ?? [])}>
                       <XAxis dataKey={m.r.grafico.x} tick={{ fontSize: 10, fill: gris }} tickLine={false} axisLine={false} minTickGap={16} />
                       <YAxis hide domain={["auto", "auto"]} />
-                      <Tooltip contentStyle={{ background: "#15130f", border: "1px solid #2c2821", fontSize: 12, color: "#ede6d8" }} />
-                      <Line dataKey={m.r.grafico.y} stroke="#d4ae5c" dot={false} strokeWidth={1.6} />
+                      <Tooltip contentStyle={{ background: "#1a1a1a", border: "1px solid #303030", fontSize: 12, color: "#ffffff" }} />
+                      <Line dataKey={m.r.grafico.y} stroke="#f4b41a" dot={false} strokeWidth={1.6} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               ) : null}
               {m.r?.grafico?.tipo === "barra" && (m.r.serie ?? m.r.tabla?.filas)?.length ? (
-                <BarrasHtml filas={(m.r.serie ?? m.r.tabla?.filas ?? []).slice(0, 8)} x={m.r.grafico.x} y={m.r.grafico.y} unidad={m.r.grafico.unidad} tinta={tinta} gris={gris} />
+                <BarrasHtml filas={(m.r.serie ?? m.r.tabla?.filas ?? [])} x={m.r.grafico.x} y={m.r.grafico.y} unidad={m.r.grafico.unidad} tinta={tinta} gris={gris} />
               ) : null}
               {m.r?.tabla?.filas?.length && !compacto ? (
-                <div style={{ overflowX: "auto" }}>
+                <ListaPaginada<any> datos={m.r.tabla.filas} nombre="resultados">{filas => (
                   <table className="libro" style={{ fontSize: 12, color: tinta }}>
-                    <thead><tr>{m.r.tabla.columnas.map((c) => <th key={c.clave} className={c.tipo && c.tipo !== "texto" ? "der" : ""} style={{ color: gris }}>{c.titulo}</th>)}</tr></thead>
+                    <thead><tr>{m.r!.tabla!.columnas.map((c) => <th key={c.clave} className={c.tipo && c.tipo !== "texto" ? "der" : ""} style={{ color: gris }}>{c.titulo}</th>)}</tr></thead>
                     <tbody>
-                      {m.r.tabla.filas.slice(0, 12).map((f, i) => (
+                      {filas.map((f, i) => (
                         <tr key={i}>{m.r!.tabla!.columnas.map((c) => <td key={c.clave} className={c.tipo && c.tipo !== "texto" ? "der" : ""}>{formato(f[c.clave], c.tipo)}</td>)}</tr>
                       ))}
                     </tbody>
                   </table>
-                </div>
+                )}</ListaPaginada>
               ) : null}
               {m.r?.acciones?.length ? (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -143,7 +144,7 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
                   })}
                 </div>
               ) : null}
-              {m.r && <span style={{ fontSize: 10, color: gris }}>{m.r.periodo ? `${m.r.periodo} · ` : ""}{m.r.motor === "datos" ? "consulta en vivo" : `redactado por ${m.r.motor?.replace("ollama:", "IA local ")}`}</span>}
+              {m.r && <span style={{ fontSize: 10, color: gris }}>{m.r.periodo ? `${m.r.periodo} · ` : ""}{m.r.motor === "comprension+datos" ? "comprensión contextual · datos del sistema" : "datos del sistema"}</span>}
             </div>
           ),
         )}
@@ -158,7 +159,7 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
         </div>
       )}
       <form onSubmit={(e) => { e.preventDefault(); void enviar(pregunta); }} style={{ display: "flex", gap: 6 }}>
-        <input className="entrada" value={pregunta} onChange={(e) => setPregunta(e.target.value)} placeholder="Pregunta sobre ventas, equidad, ofertas, locales…" aria-label="Pregunta" />
+        <textarea rows={2} maxLength={6000} className="entrada" value={pregunta} onChange={(e) => setPregunta(e.target.value)} placeholder="Pregunta sobre ventas, equidad, ofertas, locales…" aria-label="Pregunta" />
         <button className="btn" disabled={enviando}>{enviando ? "…" : "Preguntar"}</button>
       </form>
     </div>
@@ -174,7 +175,7 @@ function BarrasHtml({ filas, x, y, unidad, tinta, gris }: { filas: any[]; x: str
       {filas.map((f, i) => (
         <div key={i} style={{ display: "grid", gridTemplateColumns: "130px 1fr 72px", gap: 8, alignItems: "center", fontSize: 11 }}>
           <span style={{ color: gris, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={String(f[x])}>{String(f[x])}</span>
-          <i style={{ display: "block", height: 6, width: `${(100 * Math.max(0, Number(f[y]) || 0)) / max}%`, background: "#d4ae5c" }} />
+          <i style={{ display: "block", height: 6, width: `${(100 * Math.max(0, Number(f[y]) || 0)) / max}%`, background: "#f4b41a" }} />
           <b style={{ fontWeight: 500, color: tinta, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(Number(f[y]) || 0)}</b>
         </div>
       ))}
