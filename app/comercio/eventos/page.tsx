@@ -1,5 +1,6 @@
 "use client";
 
+import { useTiempoReal } from "@/lib/tiempo-real";
 import { useState } from "react";
 import { Cabecera, Cargando, Mensajes, Seccion } from "@/components/marco";
 import { api, descargar } from "@/lib/api";
@@ -12,6 +13,7 @@ const VACIO = { titulo: "", descripcion: "", tipo: "degustacion", inicio: "", fi
 export default function EventosComercio() {
   const { datos, recargar } = useDatos<any[]>("/local/eventos");
   const a = useAccion();
+  useTiempoReal({ eventos: () => void recargar(), catalogo: () => void recargar(), connect: () => void recargar() });
   const [f, setF] = useState(VACIO);
 
   async function proponer(e: React.FormEvent) {

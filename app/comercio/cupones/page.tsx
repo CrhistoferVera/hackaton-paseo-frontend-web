@@ -17,6 +17,8 @@ export default function Cupones() {
   const leer = useCallback(
     async (texto: string) => {
       entrega.setExito(null);
+      setCupon(null);
+      setCodigo("");
       const r = await consulta.ejecutar(() => api("/local/cupones/consultar", { cuerpo: { codigo: texto } }));
       if (r) {
         setCupon(r);
@@ -27,13 +29,13 @@ export default function Cupones() {
   );
 
   async function entregar() {
-    const r = await entrega.ejecutar(() => api("/local/cupones/entregar", { cuerpo: { codigo } }), "Cupón validado. Entrega el beneficio al cliente.");
+    const r = await entrega.ejecutar(() => api("/local/cupones/entregar", { cuerpo: { codigo } }), "Puntos canjeados. Entrega el beneficio al cliente.");
     if (r) setCupon({ ...cupon, estado: "validado", valido: false, motivo: null });
   }
 
   return (
     <>
-      <Cabecera ceja="Mostrador" titulo="Validar cupón" descripcion="Los puntos se descuentan recién al validar. Un cupón vencido o usado se rechaza con la hora." />
+      <Cabecera ceja="Mostrador" titulo="Canjear puntos" descripcion="Los puntos se descuentan recién al validar. Un cupón vencido o usado se rechaza con la hora." />
       <div className="dos-col">
         <div>
           <EscanerQR onLeido={leer} etiqueta="Escanear cupón" />
@@ -41,7 +43,7 @@ export default function Cupones() {
         </div>
         <div>
           {!cupon ? (
-            <div className="vacio">Escanea el cupón que muestra el cliente en la app.</div>
+            <div className="vacio">Escanea el QR o ingresa el código del cupón que muestra el cliente en la app.</div>
           ) : (
             <div className="objeto" style={{ padding: 24 }}>
               <span className="senal muted">Recompensa</span>

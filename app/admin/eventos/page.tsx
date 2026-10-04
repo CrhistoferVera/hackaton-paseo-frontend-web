@@ -1,5 +1,6 @@
 "use client";
 
+import { useTiempoReal } from "@/lib/tiempo-real";
 import { useState } from "react";
 import { Cabecera, Cargando, Mensajes, PanelLateral, Seccion } from "@/components/marco";
 import { api, descargar } from "@/lib/api";
@@ -10,10 +11,11 @@ const VACIO = { titulo: "", descripcion: "", tipo: "concierto", inicio: "", fin:
 
 /** Eventos del Paseo: los crea marketing o los proponen los comercios; al aprobarse aparecen en la app y Jarvis los recomienda. */
 export default function EventosAdmin() {
-  const [filtro, setFiltro] = useState<"proximos" | "pendiente" | "todos">("proximos");
+  const [filtro, setFiltro] = useState<"proximos" | "pendiente" | "todos">("pendiente");
   const { datos, recargar } = useDatos<any[]>(`/admin/eventos${filtro === "pendiente" ? "?estado=pendiente" : ""}`);
   const { datos: plano } = useDatos<any>("/recinto/plano");
   const a = useAccion();
+  useTiempoReal({ eventos: () => void recargar(), catalogo: () => void recargar(), connect: () => void recargar() });
   const [f, setF] = useState<typeof VACIO | null>(null);
 
   const lista = (datos ?? []).filter((e) => filtro !== "proximos" || new Date(e.fin) > new Date()).sort((x, y) => (filtro === "proximos" ? +new Date(x.inicio) - +new Date(y.inicio) : 0));

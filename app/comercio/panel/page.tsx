@@ -20,7 +20,7 @@ export default function Panel() {
 
   return (
     <>
-      <Cabecera ceja="Resultados" titulo="Panel de clientes y ventas" descripcion="Lo que la app te trae: clientes únicos, nuevos contra recurrentes, ticket promedio y horas pico.">
+      <Cabecera ceja="Resultados" titulo="Panel de clientes y ventas" descripcion="Lo que la app te trae: clientes únicos, nuevos contra recurrentes, promedio de ventas por cliente y horas pico.">
         <div className="segmentado">
           {[7, 30, 90].map((d) => (
             <button key={d} className={dias === d ? "on" : ""} onClick={() => setDias(d)}>{d} días</button>
@@ -41,7 +41,7 @@ export default function Panel() {
           <div className="indicadores">
             <Indicador etiqueta="Clientes únicos" valor={entero(p.clientes_unicos)} detalle={`${entero(p.nuevos)} nuevos · ${entero(p.recurrentes)} recurrentes`} />
             <Indicador etiqueta="Ventas registradas" valor={bs(p.ventas, 0)} detalle={`${entero(p.compras)} compras`} />
-            <Indicador etiqueta="Ticket promedio" valor={bs(p.ticket_promedio, 0)} />
+            <Indicador etiqueta="Promedio de ventas por cliente" valor={bs(p.clientes_unicos ? p.ventas / p.clientes_unicos : 0, 0)} />
             <Indicador etiqueta="Puntos asignados" valor={entero(p.puntos_asignados)} oro />
             <Indicador
               etiqueta="Conversión de check-in"

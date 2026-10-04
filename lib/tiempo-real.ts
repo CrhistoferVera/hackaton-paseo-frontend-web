@@ -21,20 +21,38 @@ function conectar(): Socket | null {
 /** Suscribe la pantalla a eventos en tiempo real del backend (Observer). */
 export function useTiempoReal(eventos: Record<string, (datos: any) => void>) {
   const ref = useRef(eventos);
+  useEffect(() => { ref.current = eventos; });
+
   useEffect(() => {
-    ref.current = eventos;
-  });
-  useEffect(() => {
-    const s = conectar();
-    if (!s) return;
-    const nombres = Object.keys(ref.current);
-    const manejadores = nombres.map((n) => {
-      const fn = (d: any) => ref.current[n]?.(d);
-      s.on(n, fn);
-      return [n, fn] as const;
-    });
+    let s = conectar();
+    const manejadores: [string, (datos: any) => void][] = [];
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    function registrar(sock: Socket) {
+      for (const n of Object.keys(ref.current)) {
+        const fn = (d: any) => ref.current[n]?.(d);
+        sock.on(n, fn);
+        manejadores.push([n, fn]);
+      }
+      if (sock.connected && ref.current.connect) {
+        try {
+          ref.current.connect(null);
+        } catch {}
+      }
+    }
+
+    if (s) {
+      registrar(s);
+    } else {
+      timer = setTimeout(() => {
+        s = conectar();
+        if (s) registrar(s);
+      }, 500);
+    }
+
     return () => {
-      manejadores.forEach(([n, fn]) => s.off(n, fn));
+      if (timer) clearTimeout(timer);
+      manejadores.forEach(([n, fn]) => s?.off(n, fn));
     };
   }, []);
 }
@@ -42,3 +60,4 @@ export function useTiempoReal(eventos: Record<string, (datos: any) => void>) {
 export function estadoSocket() {
   return socket?.connected ?? false;
 }
+
