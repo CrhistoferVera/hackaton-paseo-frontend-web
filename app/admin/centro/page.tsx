@@ -161,7 +161,8 @@ export default function Centro() {
 
           <div style={{ position: "absolute", top: 14, right: 18, display: "grid", gap: 8, justifyItems: "end" }}>
             <div className="segmentado">
-              {["N1", "N2", "T", "todo"].map((p) => <button key={p} className={piso === p ? "on" : ""} onClick={() => setPiso(p)}>{p === "todo" ? "Todo" : p}</button>)}
+              {(plano?.pisos ?? []).map((p) => <button key={p.id} className={piso === p.id ? "on" : ""} onClick={() => setPiso(p.id)}>{p.nombre}</button>)}
+              <button className={piso === "todo" ? "on" : ""} onClick={() => setPiso("todo")}>Todo</button>
             </div>
             <div className="segmentado">
               {(["visitas", "ventas", "permanencia"] as Capa[]).map((c) => <button key={c} className={capa === c ? "on" : ""} onClick={() => setCapa(c)}>{c}</button>)}

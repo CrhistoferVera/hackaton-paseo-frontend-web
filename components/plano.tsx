@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 
 export interface Zona { id: string; piso: string; sector: string; nombre: string; x: number; y: number; ancho: number; alto: number }
-export interface LocalPlano { id: string; nombre: string; piso: string; sector: string; numero_local: string; coord_x: number; coord_y: number; categoria: string; zona_id: string | null; activo: boolean }
+export interface LocalPlano { id: string; nombre: string; piso: string; sector: string; numero_local: string; coord_x: number; coord_y: number; categoria: string; zona_id: string | null; activo: boolean; fotos?: string[]; foto_url?: string | null }
 export interface Plano { pisos: { id: string; nombre: string }[]; ancho: number; alto: number; zonas: Zona[]; locales: LocalPlano[] }
 
 /** Escala de calor del documento: menta (frío) → oro (medio) → cobre (saturado). */
@@ -72,10 +72,11 @@ export function Plano2D({
 // ------------------------------------------------------------------ gemelo digital isométrico
 const C = 0.866;
 const H = 0.5;
-const K = 0.34;
-const CX = 230;
-const ALTURA_PISO: Record<string, number> = { T: 34, N2: 186, N1: 338 };
-const NOMBRE_PISO: Record<string, string> = { N1: "Nivel 1", N2: "Nivel 2", T: "Terrazas" };
+const K = 0.25;
+const CX = 337;
+const ORDEN_PISOS = ["T", "N1", "N2", "N3", "N4"];
+const ALTURA_PISO: Record<string, number> = { T: 20, N1: 115, N2: 210, N3: 305, N4: 400 };
+const NOMBRE_PISO: Record<string, string> = { T: "Planta baja", N1: "Nivel 1", N2: "Nivel 2", N3: "Nivel 3", N4: "Nivel 4" };
 
 function P(piso: string, x: number, y: number, z = 0): [number, number] {
   return [CX + (x - y) * C * K, ALTURA_PISO[piso] + (x + y) * H * K - z];
@@ -89,11 +90,11 @@ export function GemeloIso({
   zonaSeleccionada?: string | null; onZona?: (z: Zona) => void; onHover?: (z: Zona | null, pos?: { x: number; y: number }) => void; unidad: string;
 }) {
   const [hover, setHover] = useState<string | null>(null);
-  const pisos = ["N1", "N2", "T"].filter((p) => pisoVisible === "todo" || p === pisoVisible);
+  const pisos = ORDEN_PISOS.filter((p) => plano.pisos.some((nivel) => nivel.id === p) && (pisoVisible === "todo" || p === pisoVisible));
 
   const porPiso = useMemo(() => {
     const m = new Map<string, { zonas: Zona[]; locales: LocalPlano[] }>();
-    for (const p of ["N1", "N2", "T"]) m.set(p, { zonas: plano.zonas.filter((z) => z.piso === p), locales: plano.locales.filter((l) => l.piso === p && l.activo) });
+    for (const p of ORDEN_PISOS) m.set(p, { zonas: plano.zonas.filter((z) => z.piso === p), locales: plano.locales.filter((l) => l.piso === p && l.activo) });
     return m;
   }, [plano]);
 

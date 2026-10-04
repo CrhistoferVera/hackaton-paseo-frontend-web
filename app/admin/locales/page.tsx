@@ -6,7 +6,7 @@ import { Plano2D, type Plano } from "@/components/plano";
 import { api, descargar } from "@/lib/api";
 import { useAccion, useDatos } from "@/lib/use-datos";
 
-const VACIO = { id: "", nombre: "", categoriaId: "", piso: "N1", sector: "A", numeroLocal: "", coordX: 500, coordY: 300, horarioApertura: "10:00", horarioCierre: "22:00", descripcion: "", palabrasClave: "", nit: "", activo: true };
+const VACIO = { id: "", nombre: "", categoriaId: "", piso: "N1", sector: "A", numeroLocal: "", coordX: 500, coordY: 300, horarioApertura: "10:00", horarioCierre: "22:00", descripcion: "", palabrasClave: "", fotos: "", nit: "", activo: true };
 
 /** HU-A01: CRUD de locales con categoría, piso, sector, número y posición en el plano. */
 export default function Locales() {
@@ -19,12 +19,14 @@ export default function Locales() {
   const abrir = (l?: any) =>
     setF(l ? {
       id: l.id, nombre: l.nombre, categoriaId: l.categoria_id, piso: l.piso, sector: l.sector, numeroLocal: l.numero_local, coordX: Number(l.coord_x), coordY: Number(l.coord_y),
-      horarioApertura: l.horario_apertura.slice(0, 5), horarioCierre: l.horario_cierre.slice(0, 5), descripcion: l.descripcion, palabrasClave: (l.palabras_clave ?? []).join(", "), nit: l.nit ?? "", activo: l.activo,
+      horarioApertura: l.horario_apertura.slice(0, 5), horarioCierre: l.horario_cierre.slice(0, 5), descripcion: l.descripcion, palabrasClave: (l.palabras_clave ?? []).join(", "),
+      fotos: (l.fotos?.length ? l.fotos : l.foto_url ? [l.foto_url] : []).join("\n"), nit: l.nit ?? "", activo: l.activo,
     } : { ...VACIO, piso });
 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
-    const cuerpo = { ...f, coordX: Number(f.coordX), coordY: Number(f.coordY), palabrasClave: f.palabrasClave.split(",").map((s: string) => s.trim()).filter(Boolean), nit: f.nit || null };
+    const fotos = f.fotos.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean);
+    const cuerpo = { ...f, coordX: Number(f.coordX), coordY: Number(f.coordY), palabrasClave: f.palabrasClave.split(",").map((s: string) => s.trim()).filter(Boolean), fotos, fotoUrl: fotos[0] ?? null, nit: f.nit || null };
     delete cuerpo.id;
     const r = await a.ejecutar(() => (f.id ? api(`/admin/locales/${f.id}`, { metodo: "PATCH", cuerpo }) : api("/admin/locales", { cuerpo })), "Local guardado");
     if (r) {
@@ -37,7 +39,7 @@ export default function Locales() {
   return (
     <>
       <Cabecera ceja="¿Dónde está cada local?" titulo="Locales y plano" descripcion="Toca el plano para ubicar un local nuevo o mover el seleccionado. La zona se asigna sola según la posición.">
-        <div className="segmentado">{["N1", "N2", "T"].map((p) => <button key={p} className={piso === p ? "on" : ""} onClick={() => setPiso(p)}>{p}</button>)}</div>
+        <div className="segmentado">{plano?.pisos.map((p) => <button key={p.id} className={piso === p.id ? "on" : ""} onClick={() => setPiso(p.id)}>{p.nombre}</button>)}</div>
         <button className="btn" onClick={() => abrir()}>Nuevo local</button>
       </Cabecera>
       <Mensajes exito={!f ? a.exito : null} />
@@ -81,7 +83,7 @@ export default function Locales() {
               </select>
             </label>
             <div className="fila-campos">
-              <label className="campo"><span>Piso</span><select value={f.piso} onChange={(e) => setF({ ...f, piso: e.target.value })}><option>N1</option><option>N2</option><option>T</option></select></label>
+              <label className="campo"><span>Piso</span><select value={f.piso} onChange={(e) => setF({ ...f, piso: e.target.value })}>{plano?.pisos.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select></label>
               <label className="campo"><span>Sector</span><input required value={f.sector} onChange={(e) => setF({ ...f, sector: e.target.value })} /></label>
               <label className="campo"><span>N.º de local</span><input required value={f.numeroLocal} onChange={(e) => setF({ ...f, numeroLocal: e.target.value })} /></label>
             </div>
@@ -95,6 +97,7 @@ export default function Locales() {
             </div>
             <label className="campo"><span>Descripción</span><input value={f.descripcion} onChange={(e) => setF({ ...f, descripcion: e.target.value })} /></label>
             <label className="campo"><span>Palabras clave para el buscador</span><input value={f.palabrasClave} onChange={(e) => setF({ ...f, palabrasClave: e.target.value })} placeholder="café, desayuno" /></label>
+            <label className="campo"><span>Fotos locales</span><textarea rows={4} value={f.fotos} onChange={(e) => setF({ ...f, fotos: e.target.value })} placeholder="/uploads/locales/cinnabon/frente.jpg" /><small className="muted">Una ruta local por línea. Las imágenes deben estar dentro de la carpeta uploads del backend.</small></label>
             <label className="campo"><span>NIT (para facturas SIAT)</span><input value={f.nit} onChange={(e) => setF({ ...f, nit: e.target.value })} /></label>
             <label style={{ display: "flex", gap: 8 }}><input type="checkbox" checked={f.activo} onChange={(e) => setF({ ...f, activo: e.target.checked })} /> Activo</label>
             <Mensajes error={a.error} />

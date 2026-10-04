@@ -17,6 +17,7 @@ const DISPARADOR: Record<string, string> = {
   drop_cercano: "Drop cercano",
 };
 const COLOR_TIPO: Record<string, string> = { pasillo: "#9a9182", local: "#16140f", servicio: "#c99a3a", entrada: "#3f7a5c", escalera: "#8e6a1e", ascensor: "#8e6a1e" };
+const PISOS = ["T", "N1", "N2", "N3", "N4"];
 
 /** Jarvis proactivo: qué motor responde, con qué latencia y qué le está diciendo a los clientes. Grafo del edificio. */
 export default function JarvisAdmin() {
@@ -94,7 +95,7 @@ export default function JarvisAdmin() {
           </Seccion>
         </>
       )}
-      <Seccion titulo="Grafo del edificio" accion={<div className="segmentado">{["N1", "N2", "T"].map((p) => <button key={p} className={piso === p ? "on" : ""} onClick={() => setPiso(p)}>{p}</button>)}</div>}>
+      <Seccion titulo="Grafo del edificio" accion={<div className="segmentado">{PISOS.map((p) => <button key={p} className={piso === p ? "on" : ""} onClick={() => setPiso(p)}>{p}</button>)}</div>}>
         <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>Nodos de ubicación (pasillos, locales, servicios, accesos, escalera y ascensor) y sus conexiones en metros. Jarvis calcula las rutas y el contexto cercano sobre este grafo; se regenera solo cuando se mueve un local en el plano.</p>
         {!grafo ? <Cargando /> : (
           <svg viewBox="-20 -20 1060 640" style={{ width: "100%", background: "#fff", border: "1px solid var(--linea)" }}>
