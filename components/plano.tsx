@@ -32,6 +32,8 @@ export function Plano2D({
   seleccionado?: string | null; onLocal?: (l: LocalPlano) => void; onPunto?: (x: number, y: number) => void; oscuro?: boolean; alto?: number;
 }) {
   const ref = useRef<SVGSVGElement>(null);
+  const [zonaHover, setZonaHover] = useState<string | null>(null);
+  const [localActivo, setLocalActivo] = useState<string | null>(null);
   const zonas = plano.zonas.filter((z) => z.piso === piso);
   const locales = plano.locales.filter((l) => l.piso === piso);
   const tinta = oscuro ? "#ffffff" : "#16140f";
@@ -53,8 +55,8 @@ export function Plano2D({
       {zonas.map((z) => {
         const v = valorZona?.get(z.id);
         return (
-          <g key={z.id}>
-            <rect x={z.x} y={z.y} width={z.ancho} height={z.alto} fill={v !== undefined ? colorCalor(v / maxZona) : "transparent"} fillOpacity={v !== undefined ? 0.32 : 0} stroke={linea} strokeDasharray="4 4" />
+          <g key={z.id} onMouseEnter={() => setZonaHover(z.id)} onMouseLeave={() => setZonaHover(null)}>
+            <rect x={z.x} y={z.y} width={z.ancho} height={z.alto} fill={v !== undefined ? colorCalor(v / maxZona) : "transparent"} fillOpacity={zonaHover===z.id?0.72:v !== undefined ? 0.32 : 0} stroke={zonaHover===z.id?"#f4b41a":linea} strokeWidth={zonaHover===z.id?2.5:1} vectorEffect="non-scaling-stroke" strokeDasharray={zonaHover===z.id?undefined:"4 4"} />
             <text x={z.x + 10} y={z.y + 20} fontSize={13} fill={oscuro ? "#a3a3a3" : "#5f594f"} style={{ fontFamily: "var(--f-senal)", letterSpacing: "0.1em", textTransform: "uppercase" }}>{z.nombre}</text>
           </g>
         );
@@ -62,9 +64,9 @@ export function Plano2D({
       {locales.map((l) => {
         const v = valorLocal?.get(l.id);
         const r = v !== undefined ? 10 + 22 * Math.sqrt(v / maxLocal) : 9;
-        const sel = seleccionado === l.id;
+        const sel = seleccionado === l.id || localActivo===l.id;
         return (
-          <g key={l.id} role={onLocal ? "button" : undefined} tabIndex={onLocal ? 0 : undefined} aria-label={onLocal ? `Editar ${l.nombre}` : undefined} onKeyDown={e => { if (onLocal && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onLocal(l); } }} onClick={(e) => { if (onLocal) { e.stopPropagation(); onLocal(l); } }} style={{ cursor: onLocal ? "pointer" : undefined }}>
+          <g key={l.id} onMouseEnter={() => {setLocalActivo(l.id);setZonaHover(l.zona_id);}} onMouseLeave={() => {setLocalActivo(null);setZonaHover(null);}} onFocus={() => setLocalActivo(l.id)} onBlur={() => setLocalActivo(null)} role={onLocal ? "button" : undefined} tabIndex={onLocal ? 0 : undefined} aria-label={onLocal ? `Editar ${l.nombre}` : undefined} onKeyDown={e => { if (onLocal && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onLocal(l); } }} onClick={(e) => { if (onLocal) { e.stopPropagation(); onLocal(l); } }} style={{ cursor: onLocal ? "pointer" : undefined }}>
             <title>{l.nombre} · Local {l.numero_local}</title>
             {v !== undefined && <circle cx={l.coord_x} cy={l.coord_y} r={r * 1.8} fill={colorCalor(v / maxLocal)} fillOpacity={0.25} />}
             <rect x={l.coord_x - 34} y={l.coord_y - 24} width={68} height={48} fill={oscuro ? "#242424" : "#fbfaf7"} stroke={sel ? "#f4b41a" : linea} strokeWidth={sel ? 2.5 : 1} opacity={l.activo ? 1 : 0.4} />
@@ -91,6 +93,7 @@ export function GemeloIso({
   zonaSeleccionada?: string | null; onZona?: (z: Zona) => void; onHover?: (z: Zona | null, pos?: { x: number; y: number }) => void; unidad: string;
 }) {
   const [hover, setHover] = useState<string | null>(null);
+  const [localHover, setLocalHover] = useState<string | null>(null);
   const niveles = nivelesPlano(plano);
   const pisos = niveles.map(p=>p.id).filter(p=>pisoVisible==="todo"||p===pisoVisible);
   const altura = new Map(pisos.map((p,i)=>[p,34+(pisos.length-1-i)*180]));
@@ -104,7 +107,7 @@ export function GemeloIso({
   }, [plano]);
 
   return (
-    <svg viewBox={`0 0 ${Math.max(760,CX+plano.ancho*C*K+180)} ${altoVista}`} style={{ width: "100%", height: "100%" }} role={onZona ? "group" : "img"} aria-label="Gemelo digital del Paseo">
+    <svg viewBox={`${CX-plano.alto*C*K-30} 0 ${plano.ancho*C*K+plano.alto*C*K+230} ${altoVista}`} style={{ width: "100%", height: "100%" }} role={onZona ? "group" : "img"} aria-label="Gemelo digital del Paseo">
 
       {pisos.map((piso) => {
         const { zonas, locales } = porPiso.get(piso)!;
@@ -133,18 +136,22 @@ export function GemeloIso({
                   <polygon
                     points={pts([P(piso, z.x, z.y), P(piso, z.x + z.ancho, z.y), P(piso, z.x + z.ancho, z.y + z.alto), P(piso, z.x, z.y + z.alto)])}
                     fill={v > 0 ? colorCalor(t) : hover === z.id || zonaSeleccionada === z.id ? "#f4b41a" : "transparent"}
-                    fillOpacity={v > 0 ? 0.18 + 0.24 * t : 0.1}
-                    stroke={zonaSeleccionada === z.id ? "#f4b41a" : hover === z.id ? "#6b6152" : "transparent"}
+                    className="zona-calor"
+                    data-zona={z.id}
+                    fillOpacity={hover === z.id || zonaSeleccionada === z.id ? 0.72 : v > 0 ? 0.18 + 0.24 * t : 0.1}
+                    stroke={zonaSeleccionada === z.id || hover === z.id ? "#f4b41a" : "transparent"}
+                    strokeWidth={hover === z.id || zonaSeleccionada === z.id ? 2.5 : 1}
+                    vectorEffect="non-scaling-stroke"
                     strokeDasharray={zonaSeleccionada === z.id ? "4 3" : undefined}
                     style={{ cursor: onZona ? "pointer" : undefined }}
                     role={onZona ? "button" : undefined}
                     tabIndex={onZona ? 0 : undefined}
                     aria-label={onZona ? `Ver zona ${z.nombre}` : undefined}
                     onKeyDown={e => { if (onZona && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onZona(z); } }}
-                    onMouseEnter={() => {
-                      setHover(z.id);
-                      onHover?.(z, { x: cx, y: cy });
-                    }}
+                    onMouseEnter={e => { setHover(z.id); onHover?.(z, { x: e.clientX, y: e.clientY }); }}
+                    onMouseMove={e => onHover?.(z, { x: e.clientX, y: e.clientY })}
+                    onFocus={e => { setHover(z.id); const r = e.currentTarget.getBoundingClientRect(); onHover?.(z, {x:r.x+r.width/2,y:r.y}); }}
+                    onBlur={() => { setHover(null); onHover?.(null); }}
                     onMouseLeave={() => {
                       setHover(null);
                       onHover?.(null);
@@ -162,11 +169,12 @@ export function GemeloIso({
               .map((l) => {
                 const w = 60, d = 44, h = 9;
                 const x = l.coord_x - w / 2, y = l.coord_y - d / 2;
+                const zonaLocal = zonas.find(z => z.id === l.zona_id) ?? zonas.find(z => l.coord_x >= z.x && l.coord_x <= z.x+z.ancho && l.coord_y >= z.y && l.coord_y <= z.y+z.alto);
                 return (
-                  <g key={l.id} opacity={l.activo ? 1 : 0.35}><title>{l.nombre} · {l.numero_local} · {l.activo ? "Activo" : "Inactivo"}</title>
+                  <g key={l.id} data-local={l.id} opacity={l.activo ? 1 : 0.35} style={{cursor: zonaLocal && onZona ? "pointer" : undefined}} onMouseEnter={e => {setLocalHover(l.id);setHover(zonaLocal?.id??null);onHover?.(zonaLocal??null,{x:e.clientX,y:e.clientY});}} onMouseMove={e => onHover?.(zonaLocal??null,{x:e.clientX,y:e.clientY})} onMouseLeave={() => {setLocalHover(null);setHover(null);onHover?.(null);}} onClick={() => {if(zonaLocal)onZona?.(zonaLocal);}}><title>{l.nombre} · {l.numero_local} · {l.activo ? "Activo" : "Inactivo"}</title>
                     <polygon points={pts([P(piso, x + w, y), P(piso, x + w, y + d), P(piso, x + w, y + d, h), P(piso, x + w, y, h)])} fill="#242424" stroke="#525252" strokeWidth={0.6} />
                     <polygon points={pts([P(piso, x, y + d), P(piso, x + w, y + d), P(piso, x + w, y + d, h), P(piso, x, y + d, h)])} fill="#1a1a1a" stroke="#525252" strokeWidth={0.6} />
-                    <polygon points={pts([P(piso, x, y, h), P(piso, x + w, y, h), P(piso, x + w, y + d, h), P(piso, x, y + d, h)])} fill="#333333" stroke="#525252" strokeWidth={0.6} />
+                    <polygon points={pts([P(piso, x, y, h), P(piso, x + w, y, h), P(piso, x + w, y + d, h), P(piso, x, y + d, h)])} fill={localHover===l.id?"#ad831e":"#333333"} stroke={localHover===l.id?"#f4b41a":"#525252"} strokeWidth={localHover===l.id?2.5:0.6} vectorEffect="non-scaling-stroke" />
                   </g>
                 );
               })}

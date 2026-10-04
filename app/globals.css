@@ -215,14 +215,14 @@ table.libro small { display: block; color: var(--grafito); font-size: 12px; }
 .marco-admin .lateral nav .grupo { padding-top: 22px; font-size: 11px; color: #999; }
 .marco-admin .lateral nav a { padding: 9px 22px; font-size: 13px; }
 .marco-admin .lateral nav a.activo { background: #242424; color: #fff; border-left-color: var(--oro); }
-.marco-admin .lateral nav a.nav-ia { margin: 4px 14px 6px; padding: 14px 12px; background: var(--oro); color: #121212; border: 1px solid var(--oro); border-radius: 4px; font-weight: 600; }
+.marco-admin .lateral nav a.nav-ia { margin: 4px 14px 6px; padding: 14px 12px; background: var(--oro); color: #121212; border: 1px solid var(--oro); border-radius: 16px; font-weight: 600; }
 .marco-admin .nav-ia .etiqueta { color: #121212; border-color: #12121280; font-size: 11px; }
 .menu-admin { display: none; }
 .marco-admin h1.titulo { font-size: clamp(30px, 3.2vw, 46px); line-height: 1.12; }
 .marco-admin .cabecera { align-items: center; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--linea); }
 .marco-admin .cabecera .ceja { display: none; }
 .marco-admin .cabecera p { font-size: 14px; max-width: 68ch; line-height: 1.65; }
-.marco-admin .btn { border-radius: 4px; background: var(--oro); border-color: var(--oro); color: #121212; font-size: 13px; min-height: 42px; font-weight: 600; }
+.marco-admin .btn { border-radius: 16px; background: var(--oro); border-color: var(--oro); color: #121212; font-size: 13px; min-height: 42px; font-weight: 600; }
 .marco-admin .btn:hover { background: #ffc847; border-color: #ffc847; }
 .marco-admin .btn.claro { background: transparent; border-color: var(--linea-fuerte); color: #fff; }
 .marco-admin .btn.claro:hover { background: #282828; }
@@ -349,3 +349,19 @@ table.libro small { display: block; color: var(--grafito); font-size: 12px; }
 .marco-admin .panel-lateral dd { margin: 0; }
 
 .edificio-detalle { align-items: flex-start; }
+
+.marco-admin button { border-radius: 16px; }
+.asistente-compositor { display: flex; align-items: center; gap: 8px; }
+.asistente-compositor textarea.entrada { resize: none; height: 88px; min-height: 88px; max-height: 88px; min-width: 0; overflow-y: auto; }
+.asistente-compositor .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; }
+.asistente-grabacion { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; color: var(--oro); }
+.marco-admin .btn.grabando { color: #f4b41a; border-color: #f4b41a; }
+@media (max-width: 640px) { .asistente-compositor { flex-wrap: wrap; } .asistente-compositor textarea { flex-basis: 100%; } .asistente-compositor .btn { flex: 1; } }
+
+.mapa-grande .mapa-lienzo { height: 680px; }
+.zona-calor { transition: fill-opacity 120ms ease, stroke 120ms ease; }
+.mapa-lectura { position: fixed; z-index: 40; pointer-events: none; display: grid; gap: 5px; padding: 12px 16px; background: #121212; color: #fff; border: 1px solid #f4b41a; border-radius: 8px; width: 230px; font-size: 13px; }
+.mapa-lectura span { color: #a3a3a3; }
+.mapa-lectura b { color: #f4b41a; font-weight: 500; }
+@media (max-width: 640px) { .mapa-grande .mapa-lienzo { height: 480px; } }
+@media (prefers-reduced-motion: reduce) { .zona-calor { transition: none; } }

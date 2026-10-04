@@ -3,7 +3,7 @@
 import { useRef, useState, type PointerEvent, type ReactNode } from "react";
 
 /** Mueve la vista sin alterar las coordenadas del plano o los locales. */
-export function MapaInteractivo({ children, nombre = "Mapa del Paseo" }: { children: ReactNode; nombre?: string }) {
+export function MapaInteractivo({ children, nombre = "Mapa del Paseo", grande = false }: { children: ReactNode; nombre?: string; grande?: boolean }) {
   const [vista, setVista] = useState({ x: 0, y: 0, escala: 1 });
   const arrastre = useRef<{ id: number; x: number; y: number; origenX: number; origenY: number; movido: boolean } | null>(null);
   const omitirClic = useRef(false);
@@ -48,7 +48,7 @@ export function MapaInteractivo({ children, nombre = "Mapa del Paseo" }: { child
   }
 
   return (
-    <section className="mapa-interactivo" aria-label={nombre}>
+    <section className={`mapa-interactivo${grande ? " mapa-grande" : ""}`} aria-label={nombre}>
       <div className="mapa-controles">
         <span>Arrastra para mover. Usa los controles para acercar.</span>
         <div>

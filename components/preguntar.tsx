@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ListaPaginada } from "@/components/admin-ui";
 import { api } from "@/lib/api";
+import { useGrabacion } from "@/lib/use-grabacion";
 
 const SUGERENCIAS = ["Resumen de esta semana", "¿Cómo está la equidad del flujo?", "¿Qué debería hacer hoy?", "¿Cómo van las ofertas de la IA?", "¿Qué locales venden menos?", "¿Qué está pendiente de aprobar?"];
 
@@ -39,15 +40,19 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
   const [pregunta, setPregunta] = useState("");
   const [hilo, setHilo] = useState<Mensaje[]>([]);
   const [enviando, setEnviando] = useState(false);
+  const [errorVoz, setErrorVoz] = useState("");
   const [hechas, setHechas] = useState<Set<string>>(new Set());
   const fin = useRef<HTMLDivElement>(null);
+  const conversando = useRef(false);
+  const voz = useGrabacion(audio => void enviarAudio(audio), setErrorVoz);
+  const ocupado = enviando || voz.estado !== "inactivo";
   const tinta = oscuro ? "#ffffff" : "#16140f";
   const gris = oscuro ? "#a3a3a3" : "#5f594f";
   const linea = oscuro ? "#303030" : "#e4ded3";
 
   useEffect(() => {
     api<any[]>("/admin/asistente/historial")
-      .then((h) => setHilo(h.map((m) => ({ id: String(m.id), rol: m.rol === "cliente" ? "admin" : "ia", texto: m.texto }))))
+      .then((h) => { if (!conversando.current) setHilo(h.map((m) => ({ id: String(m.id), rol: m.rol === "cliente" ? "admin" : "ia", texto: m.texto }))); })
       .catch(() => undefined);
   }, []);
   useEffect(() => {
@@ -56,7 +61,9 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
 
   async function enviar(texto: string) {
     const t = texto.trim();
-    if (!t || enviando) return;
+    if (!t || ocupado) return;
+    conversando.current = true;
+    setErrorVoz("");
     setEnviando(true);
     setPregunta("");
     setHilo((h) => [...h, { id: `a${Date.now()}`, rol: "admin", texto: t }]);
@@ -68,6 +75,25 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
     } finally {
       setEnviando(false);
     }
+  }
+
+  async function enviarAudio(audio: Blob) {
+    conversando.current = true;
+    setEnviando(true);
+    setErrorVoz("");
+    try {
+      const formulario = new FormData();
+      formulario.append("audio", audio, audio.type.includes("mp4") ? "pregunta.m4a" : "pregunta.webm");
+      const resultado = await api<any>("/admin/asistente/voz", { formulario });
+      if (!resultado.texto?.trim() || !resultado.respuesta) {
+        setErrorVoz("No se reconoció una pregunta en el audio. Habla cerca del micrófono e inténtalo de nuevo.");
+        return;
+      }
+      const r = resultado.respuesta;
+      setHilo(h => [...h, { id: `a${Date.now()}`, rol: "admin", texto: resultado.texto }, ...(r.secciones?.length ? r.secciones : [r]).map((parte: any, i: number) => ({ id: `i${Date.now()}-${i}`, rol: "ia" as const, texto: parte.texto, r: parte }))]);
+    } catch (error) {
+      setErrorVoz(error instanceof Error ? error.message : "No se pudo procesar el audio. Inténtalo de nuevo.");
+    } finally { setEnviando(false); }
   }
 
   async function ejecutar(a: Accion, clave: string) {
@@ -84,6 +110,8 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
   }
 
   async function nueva() {
+    if (ocupado) return;
+    conversando.current = true;
     await api("/admin/asistente/reiniciar", { cuerpo: {} }).catch(() => undefined);
     setHilo([]);
   }
@@ -95,7 +123,7 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
     <div style={{ display: "flex", flexDirection: "column", gap: 10, minHeight: 0, flex: 1, width: "100%" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <span className="senal" style={{ color: oscuro ? "var(--sala-oro)" : "var(--oro)" }}>Asistente de datos</span>
-        {hilo.length > 0 && <button className="enlace" style={{ color: gris, fontSize: 11 }} onClick={() => void nueva()}>Nueva conversación</button>}
+        {hilo.length > 0 && <button className="enlace" disabled={ocupado} style={{ color: gris, fontSize: 11 }} onClick={() => void nueva()}>Nueva conversación</button>}
       </div>
       <div style={{ overflowY: "auto", display: "grid", gap: 14, minHeight: 0, flex: 1, maxHeight: compacto ? 360 : undefined, alignContent: "start" }}>
         {hilo.map((m) =>
@@ -151,16 +179,24 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
         {enviando && <p style={{ margin: 0, fontSize: 12, color: gris }}>Consultando los datos del Paseo…</p>}
         <div ref={fin} />
       </div>
-      {chips.length > 0 && !enviando && (
+      {chips.length > 0 && !ocupado && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {chips.slice(0, compacto ? 3 : 6).map((s) => (
             <button key={s} className="btn claro chico" style={{ textTransform: "none", letterSpacing: 0, fontFamily: "var(--f-texto)", fontWeight: 400, fontSize: 12, color: tinta, borderColor: linea }} onClick={() => void enviar(s)}>{s}</button>
           ))}
         </div>
       )}
-      <form onSubmit={(e) => { e.preventDefault(); void enviar(pregunta); }} style={{ display: "flex", gap: 6 }}>
+      {voz.estado !== "inactivo" && <div className="asistente-grabacion" role="status">
+        <span>{voz.estado === "permiso" ? "Permite el acceso al micrófono…" : `Grabando ${Math.floor(voz.segundos / 60)}:${String(voz.segundos % 60).padStart(2, "0")} · máximo 2 minutos`}</span>
+        <button type="button" className="enlace" onClick={voz.cancelar}>Cancelar audio</button>
+      </div>}
+      {errorVoz && <p role="alert" style={{ margin: 0, fontSize: 13, color: "#ef9b8f" }}>{errorVoz}</p>}
+      <form className="asistente-compositor" onSubmit={(e) => { e.preventDefault(); void enviar(pregunta); }}>
         <textarea rows={2} maxLength={6000} className="entrada" value={pregunta} onChange={(e) => setPregunta(e.target.value)} placeholder="Pregunta sobre ventas, equidad, ofertas, locales…" aria-label="Pregunta" />
-        <button className="btn" disabled={enviando}>{enviando ? "…" : "Preguntar"}</button>
+        <button type="button" className={`btn claro ${voz.estado === "grabando" ? "grabando" : ""}`} disabled={enviando || voz.estado === "permiso"} aria-label={voz.estado === "grabando" ? "Detener y enviar audio" : "Preguntar por voz"} onClick={() => { setErrorVoz(""); if (voz.estado === "grabando") voz.detener(); else void voz.empezar(); }}>
+          {voz.estado === "grabando" ? "Enviar audio" : <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8" /></svg><span>Hablar</span></>}
+        </button>
+        <button className="btn" disabled={ocupado || !pregunta.trim()}>{enviando ? "…" : "Preguntar"}</button>
       </form>
     </div>
   );

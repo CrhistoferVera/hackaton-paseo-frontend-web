@@ -17,6 +17,7 @@ export default function Centro() {
   const [piso, setPiso] = useState("todo");
   const [vista, setVista] = useState("3d");
   const [zona, setZona] = useState<Zona | null>(null);
+  const [sobre, setSobre] = useState<{zona:Zona;x:number;y:number}|null>(null);
   const {
     datos: calor,
     recargar,
@@ -76,7 +77,7 @@ export default function Centro() {
       {plano && <div className="mapa-resumen"><span><strong>{plano.locales.length}</strong> locales registrados</span><span><strong>{niveles.length}</strong> niveles</span><span><strong>{plano.locales.filter(l=>l.activo).length}</strong> activos</span><span>Ubicaciones del sistema</span></div>}
       <Guia titulo="Cómo leer el mapa">
         Elige qué quieres observar y un período. El color más intenso indica mayor actividad registrada, no el aforo real.
-        Selecciona una zona para ver sus locales.
+        Pasa el cursor para ver su actividad. Selecciona una zona para ver sus locales.
       </Guia>
       <div className="admin-toolbar">
         <label className="campo">
@@ -115,7 +116,7 @@ export default function Centro() {
         <Cargando />
       ) : (
         <div className="mapa-admin">
-          <MapaInteractivo key={vista + piso} nombre="Mapa de actividad por nivel">
+          <MapaInteractivo grande={vista === "3d"} key={vista + piso} nombre="Mapa de actividad por nivel">
             {vista === "3d" ? (
               <GemeloIso
                 plano={plano}
@@ -126,6 +127,7 @@ export default function Centro() {
                 pisoVisible={piso}
                 zonaSeleccionada={zona?.id}
                 onZona={setZona}
+                onHover={(z,pos) => setSobre(z && pos ? {zona:z,...pos} : null)}
                 unidad={CAPAS[capa]}
               />
             ) : (
@@ -140,6 +142,7 @@ export default function Centro() {
               />
             )}
           </MapaInteractivo>
+          {sobre && vista === "3d" && <div role="tooltip" className="mapa-lectura" style={{left:Math.max(8,Math.min(sobre.x+14,window.innerWidth-250)),top:Math.max(8,Math.min(sobre.y+14,window.innerHeight-110))}}><strong>{sobre.zona.nombre}</strong><span>{niveles.find(n=>n.id===sobre.zona.piso)?.nombre??sobre.zona.piso}</span><b>{capa === "ventas" ? bs(valores.get(sobre.zona.id)??0,0) : entero(valores.get(sobre.zona.id)??0)} {CAPAS[capa].toLowerCase()}</b></div>}
           <p className="muted">
             {vista === "2d" && piso === "todo" ? `Vista 2D: mostrando ${niveles[0]?.nombre ?? "ningún nivel registrado"}. Elige otro nivel arriba. · ` : ""}
             {CAPAS[capa]} · Menor actividad{" "}
