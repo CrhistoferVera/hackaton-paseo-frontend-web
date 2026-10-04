@@ -58,7 +58,8 @@ Una sola cuenta por negocio (rol `comercio`, por ejemplo `comercio.napolipizzeri
 | `/admin/asistente` | Asistente de datos con memoria: tablas, gráficos y acciones de un clic (crear promociones, regenerar ofertas) |
 | `/admin/ofertas` | Ofertas personales de la IA y equidad del flujo: Gini, locales sub y sobre atendidos, ajustes (peso de equidad, ofertas por cliente) |
 | `/admin/eventos` | Agenda de eventos: crear, aprobar o rechazar propuestas de comercios, cancelar |
-| `/admin/drops` | Drops y hitos AR · aprobar y lanzar las solicitudes de Drop de los comercios |
+| `/admin/drops` | Drops · aprobar y lanzar las solicitudes de Drop de los comercios |
+| `/admin/informacion` | Información para Jarvis: lo que Jarvis responde sobre temas generales (medios de pago, devoluciones…) y las preguntas que no pudo responder |
 
 ## Estructura
 

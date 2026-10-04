@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { api } from "@/lib/api";
+import { callar, hablar, useEscucha, useVozActiva } from "@/lib/voz";
 
 const SUGERENCIAS = ["Resumen de esta semana", "¿Cómo está la equidad del flujo?", "¿Qué debería hacer hoy?", "¿Cómo van las ofertas de la IA?", "¿Qué locales venden menos?", "¿Qué está pendiente de aprobar?"];
 
@@ -13,8 +14,9 @@ interface Mensaje {
   id: string;
   rol: "admin" | "ia";
   texto: string;
-  r?: { intencion: string; tabla?: { columnas: Columna[]; filas: any[] }; grafico?: { tipo: "barra" | "linea"; x: string; y: string; unidad?: string }; serie?: any[]; acciones?: Accion[]; sugerencias?: string[]; periodo?: string; motor?: string };
+  r?: { intencion: string; texto: string; tabla?: { columnas: Columna[]; filas: any[] }; grafico?: { tipo: "barra" | "linea"; x: string; y: string; unidad?: string }; serie?: any[]; acciones?: Accion[]; sugerencias?: string[]; periodo?: string; motor?: string };
   error?: boolean;
+  porVoz?: boolean;
 }
 
 const formato = (v: any, tipo?: Columna["tipo"]) => {
@@ -32,6 +34,7 @@ const formato = (v: any, tipo?: Columna["tipo"]) => {
  * Asistente del Centro de Inteligencia (HU-A15 ampliada): conversación con memoria sobre ventas, equidad
  * del flujo, ofertas de la IA, promociones, eventos, clientes y fraude. Cada respuesta puede traer una
  * tabla, un gráfico y acciones que se ejecutan con un clic (crear una promoción, regenerar ofertas).
+ * Se le puede hablar con el micrófono y leer las respuestas en voz alta con la voz neuronal del Paseo.
  */
 export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolean; compacto?: boolean }) {
   const router = useRouter();
@@ -39,6 +42,7 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
   const [hilo, setHilo] = useState<Mensaje[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [hechas, setHechas] = useState<Set<string>>(new Set());
+  const [vozActiva, setVozActiva] = useVozActiva();
   const fin = useRef<HTMLDivElement>(null);
   const tinta = oscuro ? "#ede6d8" : "#16140f";
   const gris = oscuro ? "#9a9182" : "#5f594f";
@@ -52,22 +56,35 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
   useEffect(() => {
     fin.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [hilo, enviando]);
+  useEffect(() => () => callar(), []);
+
+  function responder(r: any, porVoz = false) {
+    setHilo((h) => [...h, { id: `i${Date.now()}`, rol: "ia", texto: r.texto, r }]);
+    // Si preguntó hablando, contesta hablando aunque la lectura en voz alta esté apagada
+    if (vozActiva || porVoz) void hablar(r.texto);
+  }
 
   async function enviar(texto: string) {
     const t = texto.trim();
     if (!t || enviando) return;
+    callar();
     setEnviando(true);
     setPregunta("");
     setHilo((h) => [...h, { id: `a${Date.now()}`, rol: "admin", texto: t }]);
     try {
-      const r = await api<any>("/admin/asistente", { cuerpo: { pregunta: t } });
-      setHilo((h) => [...h, { id: `i${Date.now()}`, rol: "ia", texto: r.texto, r }]);
+      responder(await api<any>("/admin/asistente", { cuerpo: { pregunta: t } }));
     } catch (e: any) {
       setHilo((h) => [...h, { id: `e${Date.now()}`, rol: "ia", texto: e.message, error: true }]);
     } finally {
       setEnviando(false);
     }
   }
+
+  const escucha = useEscucha<{ texto: string; respuesta: any }>("/admin/asistente/voz", (v) => {
+    setHilo((h) => [...h, { id: `v${Date.now()}`, rol: "admin", texto: v.texto, porVoz: true }]);
+    if (v.respuesta) responder(v.respuesta, true);
+  });
+  const ocupado = enviando || escucha.estado === "procesando";
 
   async function ejecutar(a: Accion, clave: string) {
     if (a.tipo === "ir" && a.ruta) return router.push(a.ruta);
@@ -92,14 +109,22 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10, minHeight: 0, flex: 1, width: "100%" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
         <span className="senal" style={{ color: oscuro ? "var(--sala-oro)" : "var(--oro)" }}>Asistente de datos</span>
-        {hilo.length > 0 && <button className="enlace" style={{ color: gris, fontSize: 11 }} onClick={() => void nueva()}>Nueva conversación</button>}
+        <span style={{ display: "flex", gap: 14 }}>
+          <button className="enlace" style={{ color: vozActiva ? (oscuro ? "var(--sala-oro)" : "var(--oro)") : gris, fontSize: 11 }} onClick={() => setVozActiva(!vozActiva)} aria-pressed={vozActiva} title="Leer las respuestas en voz alta">
+            {vozActiva ? "● Voz activada" : "○ Leer en voz alta"}
+          </button>
+          {hilo.length > 0 && <button className="enlace" style={{ color: gris, fontSize: 11 }} onClick={() => void nueva()}>Nueva conversación</button>}
+        </span>
       </div>
       <div style={{ overflowY: "auto", display: "grid", gap: 14, minHeight: 0, flex: 1, maxHeight: compacto ? 360 : undefined, alignContent: "start" }}>
         {hilo.map((m) =>
           m.rol === "admin" ? (
-            <p key={m.id} className="display" style={{ fontStyle: "italic", fontSize: 16, margin: 0, color: tinta, borderTop: `1px solid ${linea}`, paddingTop: 10 }}>{m.texto}</p>
+            <p key={m.id} className="display" style={{ fontStyle: "italic", fontSize: 16, margin: 0, color: tinta, borderTop: `1px solid ${linea}`, paddingTop: 10 }}>
+              {m.texto}
+              {m.porVoz && <span style={{ fontStyle: "normal", fontSize: 10, color: gris, marginLeft: 8 }}>por voz</span>}
+            </p>
           ) : (
             <div key={m.id} style={{ display: "grid", gap: 8 }}>
               <p style={{ margin: 0, fontSize: 13, color: m.error ? "#e0645a" : tinta, lineHeight: 1.5 }}>{m.texto}</p>
@@ -143,25 +168,59 @@ export function Preguntar({ oscuro = true, compacto = false }: { oscuro?: boolea
                   })}
                 </div>
               ) : null}
-              {m.r && <span style={{ fontSize: 10, color: gris }}>{m.r.periodo ? `${m.r.periodo} · ` : ""}{m.r.motor === "datos" ? "consulta en vivo" : `redactado por ${m.r.motor?.replace("ollama:", "IA local ")}`}</span>}
+              {m.r && (
+                <span style={{ fontSize: 10, color: gris, display: "flex", gap: 10 }}>
+                  <span>{m.r.periodo ? `${m.r.periodo} · ` : ""}{m.r.motor === "datos" ? "consulta en vivo" : `redactado por ${m.r.motor?.replace("ollama:", "IA local ")}`}</span>
+                  <button className="enlace" style={{ color: gris, fontSize: 10 }} onClick={() => void hablar(m.texto)}>Escuchar</button>
+                </span>
+              )}
             </div>
           ),
         )}
-        {enviando && <p style={{ margin: 0, fontSize: 12, color: gris }}>Consultando los datos del Paseo…</p>}
+        {ocupado && <p style={{ margin: 0, fontSize: 12, color: gris }}>{escucha.estado === "procesando" ? "Escuchando lo que dijiste…" : "Consultando los datos del Paseo…"}</p>}
         <div ref={fin} />
       </div>
-      {chips.length > 0 && !enviando && (
+      {chips.length > 0 && !ocupado && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {chips.slice(0, compacto ? 3 : 6).map((s) => (
             <button key={s} className="btn claro chico" style={{ textTransform: "none", letterSpacing: 0, fontFamily: "var(--f-texto)", fontWeight: 400, fontSize: 12, color: tinta, borderColor: linea }} onClick={() => void enviar(s)}>{s}</button>
           ))}
         </div>
       )}
-      <form onSubmit={(e) => { e.preventDefault(); void enviar(pregunta); }} style={{ display: "flex", gap: 6 }}>
-        <input className="entrada" value={pregunta} onChange={(e) => setPregunta(e.target.value)} placeholder="Pregunta sobre ventas, equidad, ofertas, locales…" aria-label="Pregunta" />
-        <button className="btn" disabled={enviando}>{enviando ? "…" : "Preguntar"}</button>
+      {escucha.error && <p style={{ margin: 0, fontSize: 12, color: "#e0645a" }}>{escucha.error}</p>}
+      <form onSubmit={(e) => { e.preventDefault(); void enviar(pregunta); }} style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
+        <button
+          type="button"
+          className={`btn ${escucha.escuchando ? "oro" : "claro"}`}
+          onClick={() => (escucha.escuchando ? escucha.detener() : void escucha.iniciar())}
+          disabled={ocupado || escucha.estado === "permiso"}
+          aria-label={escucha.escuchando ? "Enviar lo que dije" : "Preguntar por voz"}
+          title={escucha.escuchando ? "Toca para enviar" : "Preguntar por voz"}
+          style={{ minWidth: 44, paddingLeft: 12, paddingRight: 12, color: escucha.escuchando ? undefined : tinta, borderColor: escucha.escuchando ? undefined : linea }}
+        >
+          <Microfono />
+        </button>
+        {escucha.estado === "permiso" ? (
+          <span className="entrada" style={{ color: gris, display: "flex", alignItems: "center" }}>Permite el micrófono en la ventana del navegador…</span>
+        ) : escucha.escuchando ? (
+          <button type="button" className="entrada" onClick={() => escucha.detener()} style={{ textAlign: "left", cursor: "pointer", color: tinta }}>
+            Escuchando… {escucha.segundos} s · toca para enviar
+          </button>
+        ) : (
+          <input className="entrada" value={pregunta} onChange={(e) => setPregunta(e.target.value)} placeholder="Escribe o toca el micrófono: ventas, equidad, ofertas, locales…" aria-label="Pregunta" />
+        )}
+        <button className="btn" disabled={ocupado || escucha.escuchando}>{enviando ? "…" : "Preguntar"}</button>
       </form>
     </div>
+  );
+}
+
+function Microfono() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="9" y="2" width="6" height="12" rx="3" />
+      <path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8" />
+    </svg>
   );
 }
 

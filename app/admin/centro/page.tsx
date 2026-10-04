@@ -238,10 +238,10 @@ function PanelZona({ zona, valor, unidad, plano, puedeLanzar, onCerrar }: { zona
         {puedeLanzar && (
           <section style={{ marginTop: 28 }}>
             <h3 className="display" style={{ fontSize: 22, margin: "0 0 4px" }}>Lanzar Drop</h3>
-            <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Avisa a los clientes que están en el Paseo. Quien enfoque el cartel de esta zona desbloquea un precio especial en PaseoYa.</p>
+            <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>Avisa a los clientes que están en el Paseo. El Drop aparece en la app y en el mapa sobre el local del producto; quien lo reclame dentro del Paseo desbloquea el precio especial en PaseoYa.</p>
             {lanzado ? (
               <div className="aviso exito">
-                Drop activo hasta las {new Date(lanzado.fin).toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit" })}. Avisamos a {lanzado.avisados} clientes. Cartel: <b className="dato">{lanzado.cartel}</b>. Mira cómo cambia el color de la zona en el gemelo.
+                Drop activo hasta las {new Date(lanzado.fin).toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit" })}. Avisamos a {lanzado.avisados} clientes; ya aparece en la app sobre {lanzado.local}. Mira cómo cambia el color de la zona en el gemelo.
               </div>
             ) : (
               <form onSubmit={lanzar} style={{ display: "grid", gap: 14 }}>

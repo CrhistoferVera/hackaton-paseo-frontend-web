@@ -16,6 +16,7 @@ const ITEMS: ItemNav[] = [
   { href: "/admin/economia", texto: "Economía del programa", grupo: "Centro de Inteligencia" },
   { href: "/admin/paseoya", texto: "PaseoYa", grupo: "Centro de Inteligencia" },
   { href: "/admin/jarvis", texto: "Jarvis y grafo", grupo: "Centro de Inteligencia" },
+  { href: "/admin/informacion", texto: "Información para Jarvis", grupo: "Centro de Inteligencia", roles: ["admin", "marketing"] },
   { href: "/admin/fraude", texto: "Alertas de fraude", grupo: "Confianza", roles: ["admin", "analista"] },
   { href: "/admin/auditoria", texto: "Auditoría", grupo: "Confianza", roles: ["admin"] },
   { href: "/admin/locales", texto: "Locales y plano", grupo: "Programa", roles: ["admin", "marketing"] },
@@ -25,7 +26,7 @@ const ITEMS: ItemNav[] = [
   { href: "/admin/misiones", texto: "Misiones", grupo: "Programa", roles: ["admin", "marketing"] },
   { href: "/admin/promociones", texto: "Promociones", grupo: "Programa", roles: ["admin", "marketing"] },
   { href: "/admin/categorias", texto: "Categorías y destacados", grupo: "Programa", roles: ["admin", "marketing"] },
-  { href: "/admin/drops", texto: "Drops y hitos AR", grupo: "Programa", roles: ["admin", "marketing"] },
+  { href: "/admin/drops", texto: "Drops", grupo: "Programa", roles: ["admin", "marketing"] },
   { href: "/admin/eventos", texto: "Eventos del Paseo", grupo: "Programa", roles: ["admin", "marketing"] },
 ];
 

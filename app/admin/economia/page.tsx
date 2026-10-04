@@ -7,7 +7,7 @@ import { useDatos } from "@/lib/use-datos";
 
 const TIPO: Record<string, string> = {
   compra: "Compras", bono: "Bonos de bienvenida", visita: "Visitas diarias", descubrimiento: "Descubrimiento", mision: "Misiones",
-  canje: "Canjes", parqueo: "Parqueo", paseoya: "Retiros PaseoYa", referido: "Referidos", hito: "Monedas AR", factura: "Facturas SIAT",
+  canje: "Canjes", parqueo: "Parqueo", paseoya: "Retiros PaseoYa", referido: "Referidos", factura: "Facturas SIAT",
   anulacion: "Anulaciones", vencimiento: "Vencimientos", drop: "Drops", transferencia: "Transferencias",
 };
 

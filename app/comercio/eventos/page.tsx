@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Cabecera, Cargando, Mensajes, Seccion } from "@/components/marco";
-import { api } from "@/lib/api";
+import { api, descargar } from "@/lib/api";
 import { ESTADO_REVISION, TIPOS_EVENTO, bs, fechaHora, hora, isoLocal } from "@/lib/formato";
 import { useAccion, useDatos } from "@/lib/use-datos";
 
@@ -89,6 +89,9 @@ export default function EventosComercio() {
                       </td>
                       <td className="der" style={{ whiteSpace: "nowrap" }}>
                         <span className={`etiqueta ${ESTADO_REVISION[ev.estado][1]}`}>{pasado && ev.estado === "aprobada" ? "Realizado" : ESTADO_REVISION[ev.estado][0]}</span>
+                        {!pasado && ev.estado === "aprobada" && (
+                          <button className="btn claro chico" style={{ marginLeft: 8 }} title="Imprímelo y ponlo en el evento: quien lo escanea suma los puntos de asistencia" onClick={() => a.ejecutar(() => descargar(`/local/eventos/${ev.id}/qr.pdf`, `qr-${ev.titulo}.pdf`), "QR de asistencia descargado")}>QR de asistencia</button>
+                        )}
                         {!pasado && ["pendiente", "aprobada"].includes(ev.estado) && (
                           <button className="btn claro chico" style={{ marginLeft: 8 }} onClick={() => cancelar(ev)}>{ev.estado === "pendiente" ? "Retirar" : "Cancelar"}</button>
                         )}

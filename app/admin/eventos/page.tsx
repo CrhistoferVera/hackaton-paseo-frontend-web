@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Cabecera, Cargando, Mensajes, PanelLateral, Seccion } from "@/components/marco";
-import { api } from "@/lib/api";
+import { api, descargar } from "@/lib/api";
 import { ESTADO_REVISION, TIPOS_EVENTO, bs, fechaHora, hora, isoLocal } from "@/lib/formato";
 import { useAccion, useDatos } from "@/lib/use-datos";
 
@@ -81,7 +81,12 @@ export default function EventosAdmin() {
                     ) : (
                       <>
                         <span className={`etiqueta ${ESTADO_REVISION[ev.estado][1]}`}>{ESTADO_REVISION[ev.estado][0]}</span>
-                        {ev.estado === "aprobada" && new Date(ev.fin) > new Date() && <button className="btn claro chico" style={{ marginLeft: 8 }} onClick={() => revisar(ev, "cancelada")}>Cancelar</button>}
+                        {ev.estado === "aprobada" && new Date(ev.fin) > new Date() && (
+                          <>
+                            <button className="btn claro chico" style={{ marginLeft: 8 }} title="Cartel con el QR de asistencia: quien lo escanea durante el evento suma sus puntos" onClick={() => a.ejecutar(() => descargar(`/admin/eventos/${ev.id}/qr.pdf`, `qr-${ev.titulo}.pdf`), "QR de asistencia descargado")}>QR de asistencia</button>
+                            <button className="btn claro chico" style={{ marginLeft: 8 }} onClick={() => revisar(ev, "cancelada")}>Cancelar</button>
+                          </>
+                        )}
                       </>
                     )}
                   </td>

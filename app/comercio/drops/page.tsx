@@ -15,15 +15,14 @@ const ESTADO: Record<string, [string, string]> = {
 };
 
 /**
- * El comercio pide un Drop: un precio especial por tiempo limitado que se abre en el cartel AR de una zona.
- * La administración lo aprueba y lo lanza; Jarvis avisa por voz a quienes están cerca.
+ * El comercio pide un Drop: un precio especial por tiempo limitado que los clientes reclaman desde la app
+ * estando en el Paseo. La administración lo aprueba y lo lanza; Jarvis avisa por voz a quienes están cerca.
  */
 export default function DropsComercio() {
   const { datos, recargar } = useDatos<any[]>("/local/drops");
   const { datos: productos } = useDatos<any[]>("/local/productos");
-  const { datos: plano } = useDatos<any>("/recinto/plano");
   const a = useAccion();
-  const [f, setF] = useState({ productoId: "", precioEspecial: "", mensaje: "", zonaId: "", fechaDeseada: "", minutos: "60", maxReclamos: "40" });
+  const [f, setF] = useState({ productoId: "", precioEspecial: "", mensaje: "", fechaDeseada: "", minutos: "60", maxReclamos: "40" });
   useTiempoReal({ drop: () => void recargar() });
 
   const producto = productos?.find((p) => p.id === f.productoId);
@@ -35,7 +34,6 @@ export default function DropsComercio() {
       productoId: f.productoId,
       precioEspecial: Number(f.precioEspecial),
       mensaje: f.mensaje,
-      zonaId: f.zonaId || null,
       fechaDeseada: f.fechaDeseada ? new Date(f.fechaDeseada).toISOString() : null,
       minutos: Number(f.minutos),
       maxReclamos: Number(f.maxReclamos),
@@ -58,7 +56,7 @@ export default function DropsComercio() {
       <Cabecera
         ceja="Mi negocio"
         titulo="Drops"
-        descripcion="Un Drop es una oferta relámpago: tu producto a precio especial, solo por un rato y solo para quien llegue al cartel AR de la zona. Jarvis avisa por voz a los clientes cercanos."
+        descripcion="Un Drop es una oferta relámpago: tu producto a precio especial, solo por un rato y con unidades limitadas. Los clientes lo ven en la app y en el mapa, sobre tu local, y lo reclaman estando en el Paseo. Jarvis avisa por voz a los que están cerca."
       />
       <div className="dos-col">
         <form onSubmit={solicitar} style={{ display: "grid", gap: 16 }}>
@@ -82,13 +80,6 @@ export default function DropsComercio() {
           <label className="campo">
             <span>Mensaje para el cliente</span>
             <input required maxLength={140} value={f.mensaje} onChange={(e) => setF({ ...f, mensaje: e.target.value })} placeholder="¡Media docena a precio de locura!" />
-          </label>
-          <label className="campo">
-            <span>Zona del cartel</span>
-            <select value={f.zonaId} onChange={(e) => setF({ ...f, zonaId: e.target.value })}>
-              <option value="">La zona de mi local</option>
-              {plano?.zonas.map((z: any) => <option key={z.id} value={z.id}>{z.nombre} · {z.piso === "T" ? "Terrazas" : z.piso === "N1" ? "Nivel 1" : "Nivel 2"}</option>)}
-            </select>
           </label>
           <label className="campo"><span>Cuándo te gustaría (opcional)</span><input type="datetime-local" value={f.fechaDeseada} onChange={(e) => setF({ ...f, fechaDeseada: e.target.value })} /></label>
           <div className="fila-campos">
