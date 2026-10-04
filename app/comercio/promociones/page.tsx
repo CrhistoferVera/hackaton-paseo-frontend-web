@@ -1,5 +1,6 @@
 "use client";
 
+import { useTiempoReal } from "@/lib/tiempo-real";
 import { useState } from "react";
 import { Cabecera, Mensajes, Seccion } from "@/components/marco";
 import { api } from "@/lib/api";
@@ -13,7 +14,8 @@ export default function Promociones() {
   const { datos, recargar } = useDatos<any[]>("/local/promociones");
   const { datos: panel } = useDatos<any>("/local/panel?dias=30");
   const a = useAccion();
-  const [f, setF] = useState({ titulo: "", tipo: "puntos_dobles", multiplicador: 2, descripcion: "", diasSemana: [1, 2, 3, 4], horaInicio: "15:00", horaFin: "17:00", inicio: hoyIso(), fin: diasAtrasIso(-30) });
+  useTiempoReal({ promociones: () => void recargar(), catalogo: () => void recargar(), connect: () => void recargar() });
+  const [f, setF] = useState({ titulo: "", tipo: "puntos_dobles", multiplicador: 2, costoPuntos: "", descripcion: "", diasSemana: [1, 2, 3, 4], horaInicio: "15:00", horaFin: "17:00", inicio: hoyIso(), fin: diasAtrasIso(-30) });
 
   const flojas = panel?.horas?.length
     ? [...panel.horas].filter((h: any) => h.hora >= 10 && h.hora <= 21).sort((a: any, b: any) => a.compras - b.compras).slice(0, 3).map((h: any) => `${h.hora}:00`)
@@ -21,7 +23,7 @@ export default function Promociones() {
 
   async function crear(e: React.FormEvent) {
     e.preventDefault();
-    const r = await a.ejecutar(() => api("/local/promociones", { cuerpo: { ...f, multiplicador: Number(f.multiplicador) } }), "Enviada. El Paseo la revisará y te avisaremos.");
+    const r = await a.ejecutar(() => api("/local/promociones", { cuerpo: { ...f, multiplicador: Number(f.multiplicador), costoPuntos: f.tipo === 'cupon' ? Number(f.costoPuntos) : undefined } }), "Enviada. El Paseo la revisará y te avisaremos.");
     if (r) void recargar();
   }
 
@@ -52,6 +54,7 @@ export default function Promociones() {
           {f.tipo === "puntos_dobles" && (
             <label className="campo"><span>Multiplicador</span><input type="number" min="1.5" max="5" step="0.5" value={f.multiplicador} onChange={(e) => setF({ ...f, multiplicador: Number(e.target.value) })} /></label>
           )}
+          {f.tipo === "cupon" && <label className="campo"><span>Costo del cupón (puntos)</span><input required type="number" min="1" step="1" value={f.costoPuntos} onChange={e => setF({...f,costoPuntos:e.target.value})} /></label>}
           <label className="campo"><span>Descripción para el cliente</span><textarea rows={2} value={f.descripcion} onChange={(e) => setF({ ...f, descripcion: e.target.value })} /></label>
           <div className="campo">
             <span>Días</span>

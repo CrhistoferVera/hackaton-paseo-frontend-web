@@ -16,7 +16,7 @@ export default function Movimientos() {
 
   return (
     <>
-      <Cabecera ceja="Resultados" titulo="Movimientos" descripcion="Compras registradas, puntos emitidos y canjes validados en tu local.">
+      <Cabecera ceja="Resultados" titulo="Movimientos" descripcion="Ventas registradas, puntos emitidos y canjes validados en tu local.">
         <button className="btn claro" onClick={() => csv.ejecutar(() => descargar(`/local/movimientos.csv?${q}`, `movimientos-${desde}-${hasta}.csv`))}>
           Exportar CSV
         </button>
@@ -31,12 +31,12 @@ export default function Movimientos() {
       ) : datos ? (
         <>
           <div className="indicadores">
-            <Indicador etiqueta="Compras" valor={entero(datos.totales.compras)} />
+            <Indicador etiqueta="Ventas" valor={entero(datos.totales.compras)} />
             <Indicador etiqueta="Ventas registradas" valor={bs(datos.totales.ventasBs, 0)} />
             <Indicador etiqueta="Puntos emitidos" valor={entero(datos.totales.puntosEmitidos)} oro />
             <Indicador etiqueta="Canjes validados" valor={entero(datos.totales.canjes)} detalle={pts(datos.totales.puntosCanjeados)} />
           </div>
-          <Seccion titulo="Compras">
+          <Seccion titulo="Ventas">
             {!datos.compras.length ? (
               <div className="vacio">Sin compras en el período.</div>
             ) : (

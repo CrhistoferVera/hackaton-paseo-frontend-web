@@ -1,5 +1,6 @@
 "use client";
 
+import { useTiempoReal } from "@/lib/tiempo-real";
 import { useState } from "react";
 import { Cabecera, Cargando, Mensajes, PanelLateral } from "@/components/marco";
 import { api } from "@/lib/api";
@@ -17,9 +18,18 @@ export default function Promociones() {
   const [rechazo, setRechazo] = useState<{ id: string; comentario: string } | null>(null);
   const [nueva, setNueva] = useState<any | null>(null);
   const a = useAccion();
+  useTiempoReal({ promociones: () => void recargar(), catalogo: () => void recargar(), connect: () => void recargar() });
 
   async function revisar(id: string, e: "aprobada" | "rechazada", comentario?: string) {
-    const r = await a.ejecutar(() => api(`/admin/promociones/${id}/revision`, { cuerpo: { estado: e, comentario } }), e === "aprobada" ? "Aprobada y visible en la app" : "Rechazada; el local recibió tu comentario");
+    const promo = datos?.find(p => p.id===id);
+    let costoPuntos: number | undefined;
+    if (e==='aprobada' && promo?.tipo==='cupon') {
+      const costo = prompt('Costo del cupón en puntos:', String(promo.costo_puntos ?? ''));
+      if (costo===null) return;
+      costoPuntos=Number(costo);
+      if (!Number.isInteger(costoPuntos) || costoPuntos<=0) { a.setError('Indica un costo entero mayor a cero'); return; }
+    }
+    const r = await a.ejecutar(() => api(`/admin/promociones/${id}/revision`, { cuerpo: { estado: e, comentario, costoPuntos } }), e === "aprobada" ? "Aprobada y visible en la app" : "Rechazada; el local recibió tu comentario");
     if (r) {
       setRechazo(null);
       void recargar();
@@ -28,7 +38,7 @@ export default function Promociones() {
 
   async function crear(e: React.FormEvent) {
     e.preventDefault();
-    const r = await a.ejecutar(() => api("/admin/promociones", { cuerpo: { ...nueva, multiplicador: Number(nueva.multiplicador), localId: nueva.localId || null, segmentoId: nueva.segmentoId || null } }), "Promoción publicada");
+    const r = await a.ejecutar(() => api("/admin/promociones", { cuerpo: { ...nueva, multiplicador: Number(nueva.multiplicador), costoPuntos:nueva.tipo==='cupon' ? Number(nueva.costoPuntos) : undefined, localId: nueva.localId || null, segmentoId: nueva.segmentoId || null } }), "Promoción publicada");
     if (r) {
       setNueva(null);
       void recargar();
@@ -39,7 +49,7 @@ export default function Promociones() {
     <>
       <Cabecera ceja="Programa" titulo="Promociones" descripcion="Los locales proponen; el Paseo aprueba. También puedes crear promociones dirigidas a un segmento.">
         <div className="segmentado">{[["pendiente", "Por revisar"], ["aprobada", "Aprobadas"], ["rechazada", "Rechazadas"], ["", "Todas"]].map(([v, t]) => <button key={v} className={estado === v ? "on" : ""} onClick={() => setEstado(v)}>{t}</button>)}</div>
-        <button className="btn" onClick={() => setNueva({ titulo: "", tipo: "puntos_dobles", multiplicador: 2, descripcion: "", localId: "", segmentoId: "", diasSemana: [0, 1, 2, 3, 4, 5, 6], horaInicio: "10:00", horaFin: "22:00", inicio: hoyIso(), fin: diasAtrasIso(-14) })}>Nueva promoción</button>
+        <button className="btn" onClick={() => setNueva({ titulo: "", tipo: "puntos_dobles", multiplicador: 2, costoPuntos: "", descripcion: "", localId: "", segmentoId: "", diasSemana: [0, 1, 2, 3, 4, 5, 6], horaInicio: "10:00", horaFin: "22:00", inicio: hoyIso(), fin: diasAtrasIso(-14) })}>Nueva promoción</button>
       </Cabecera>
       <Mensajes error={a.error} exito={a.exito} />
       {!datos ? <Cargando /> : !datos.length ? <div className="vacio">No hay promociones en este estado.</div> : (
@@ -48,7 +58,7 @@ export default function Promociones() {
           <tbody>
             {datos.map((p) => (
               <tr key={p.id}>
-                <td>{p.titulo}<small>{p.tipo === "puntos_dobles" ? `Puntos ×${Number(p.multiplicador)}` : "Cupón"} · {p.descripcion}</small>{p.comentario && <small>Comentario: {p.comentario}</small>}</td>
+                <td>{p.titulo}{p.tipo==="cupon" && p.estado==="aprobada" && !p.costo_puntos && <button className="btn chico" onClick={() => revisar(p.id,"aprobada")}>Definir costo del canje</button>}<small>{p.tipo === "puntos_dobles" ? `Puntos ×${Number(p.multiplicador)}` : "Cupón"} · {p.descripcion}</small>{p.comentario && <small>Comentario: {p.comentario}</small>}</td>
                 <td>{p.local ?? "Todo el Paseo"}</td>
                 <td style={{ fontSize: 13 }}>{p.dias_semana.map((d: number) => DIAS[d]).join(" ")} · {p.hora_inicio.slice(0, 5)}–{p.hora_fin.slice(0, 5)}<small>{fecha(p.inicio)} a {fecha(p.fin)}</small></td>
                 <td>{p.segmento ?? "Todos"}</td>
@@ -78,6 +88,7 @@ export default function Promociones() {
         {nueva && (
           <form onSubmit={crear} style={{ display: "grid", gap: 14 }}>
             <label className="campo"><span>Título</span><input required value={nueva.titulo} onChange={(e) => setNueva({ ...nueva, titulo: e.target.value })} /></label>
+            {nueva.tipo==="cupon" && <label className="campo"><span>Costo del cupón (puntos)</span><input required type="number" min="1" step="1" value={nueva.costoPuntos} onChange={e => setNueva({...nueva,costoPuntos:e.target.value})} /></label>}
             <label className="campo"><span>Descripción</span><input value={nueva.descripcion} onChange={(e) => setNueva({ ...nueva, descripcion: e.target.value })} /></label>
             <div className="fila-campos">
               <label className="campo"><span>Tipo</span><select value={nueva.tipo} onChange={(e) => setNueva({ ...nueva, tipo: e.target.value })}><option value="puntos_dobles">Puntos multiplicados</option><option value="cupon">Cupón</option></select></label>

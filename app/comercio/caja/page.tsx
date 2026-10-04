@@ -20,20 +20,17 @@ interface Cliente {
 
 const TECLAS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ",", "0", "⌫"];
 
-/** HU-L02 y HU-L03: escanear el pase (o identificar por celular), ingresar el monto y acreditar. */
+/** HU-L02 y HU-L03: escanear el pase (o ingresar su código único), ingresar el monto y acreditar. */
 export default function Caja() {
   const { datos: local } = useDatos<any>("/local/mi-local");
   const { datos: recientes, recargar } = useDatos<any[]>("/local/compras/recientes");
-  const [modo, setModo] = useState<"qr" | "celular">("qr");
+  const [modo, setModo] = useState<"qr" | "codigo">("qr");
   const [pase, setPase] = useState<string | null>(null);
-  const [identificado, setIdentificado] = useState<{ clienteId: string; codigo: string } | null>(null);
+  const [identificado, setIdentificado] = useState<{ codigo: string } | null>(null);
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [monto, setMonto] = useState("");
   const [categoria, setCategoria] = useState<string>("");
   const [factura, setFactura] = useState("");
-  const [ultimos, setUltimos] = useState("");
-  const [coincidencias, setCoincidencias] = useState<any[]>([]);
-  const [elegido, setElegido] = useState<any | null>(null);
   const [codigo6, setCodigo6] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,10 +54,7 @@ export default function Caja() {
     setCliente(null);
     setMonto("");
     setFactura("");
-    setElegido(null);
     setCodigo6("");
-    setCoincidencias([]);
-    setUltimos("");
     setError(null);
   };
 
@@ -80,23 +74,13 @@ export default function Caja() {
     }
   }, []);
 
-  async function buscarCelular(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
+  async function confirmarCodigo(e: React.FormEvent) {
+    e.preventDefault(); setError(null); setResultado(null);
     try {
-      const r = await api<any[]>(`/local/clientes/buscar?ultimos=${ultimos}`);
-      setCoincidencias(r);
-      if (!r.length) setError("Ningún cliente activo termina en esos dígitos");
-    } catch (e: any) {
-      setError(e.message);
-    }
-  }
-
-  function confirmarCodigo(e: React.FormEvent) {
-    e.preventDefault();
-    if (!elegido || codigo6.length !== 6) return;
-    setIdentificado({ clienteId: elegido.id, codigo: codigo6 });
-    setCliente({ clienteId: elegido.id, nombre: elegido.nombre, nivel: "", comprasEnEsteLocal: 0, promocion: null, bsPorPunto: 1 });
+      const codigo = codigo6.trim();
+      const c = await api<Cliente>('/local/clientes/codigo', {cuerpo:{codigo}});
+      setIdentificado({codigo}); setPase(null); setCliente(c);
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : 'No se pudo verificar el código'); }
   }
 
   const enviarCompra = useCallback(async (c: CompraPendiente) => {
@@ -164,7 +148,6 @@ export default function Caja() {
       claveIdempotencia: crypto.randomUUID(),
       capturadoEn: new Date().toISOString(),
       pase: pase ?? undefined,
-      clienteId: identificado?.clienteId,
       codigoCliente: identificado?.codigo,
       montoBs: montoNum,
       categoria,
@@ -197,7 +180,7 @@ export default function Caja() {
 
   return (
     <>
-      <Cabecera ceja={local ? `${local.nombre} · ${local.piso} · Local ${local.numero_local}` : "Caja"} titulo="Registrar compra" descripcion="Escanea el pase del cliente, ingresa el monto y acredita. Los puntos aparecen en su celular al instante.">
+      <Cabecera ceja={local ? `${local.nombre} · ${local.piso} · Local ${local.numero_local}` : "Caja"} titulo="Registrar compra" descripcion="Escanea el QR o ingresa el código único del cliente, ingresa el monto y acredita. Los puntos aparecen en su celular al instante.">
         <span className={`etiqueta ${enLinea ? "exito" : "alerta"}`}>{enLinea ? "En línea" : "Sin conexión"}</span>
         {cola.length > 0 && <span className="etiqueta oro">{cola.length} por enviar</span>}
       </Cabecera>
@@ -224,41 +207,15 @@ export default function Caja() {
             <>
               <div className="segmentado" style={{ marginBottom: 18 }}>
                 <button className={modo === "qr" ? "on" : ""} onClick={() => setModo("qr")}>Escanear pase</button>
-                <button className={modo === "celular" ? "on" : ""} onClick={() => setModo("celular")}>Sin QR: celular</button>
+                <button className={modo === "codigo" ? "on" : ""} onClick={() => setModo("codigo")}>Código único</button>
               </div>
               {modo === "qr" ? (
                 <EscanerQR onLeido={leerPase} etiqueta="Abrir cámara" />
               ) : (
-                <div style={{ display: "grid", gap: 16 }}>
-                  <form onSubmit={buscarCelular} style={{ display: "flex", gap: 8, alignItems: "end" }}>
-                    <label className="campo" style={{ flex: 1 }}>
-                      <span>Últimos 4 dígitos del celular</span>
-                      <input inputMode="numeric" maxLength={4} value={ultimos} onChange={(e) => setUltimos(e.target.value.replace(/\D/g, ""))} />
-                    </label>
-                    <button className="btn" disabled={ultimos.length !== 4}>Buscar</button>
-                  </form>
-                  {coincidencias.length > 0 && (
-                    <table className="libro">
-                      <tbody>
-                        {coincidencias.map((c) => (
-                          <tr key={c.id} className="clic" onClick={() => setElegido(c)} style={elegido?.id === c.id ? { background: "var(--veladura)" } : undefined}>
-                            <td>{c.nombre}</td>
-                            <td className="der dato">{c.celular}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                  {elegido && (
-                    <form onSubmit={confirmarCodigo} style={{ display: "flex", gap: 8, alignItems: "end" }}>
-                      <label className="campo" style={{ flex: 1 }}>
-                        <span>Código de 6 dígitos que ve {elegido.nombre} en su app</span>
-                        <input inputMode="numeric" maxLength={6} className="dato" style={{ letterSpacing: "0.2em", fontSize: 18 }} value={codigo6} onChange={(e) => setCodigo6(e.target.value.replace(/\D/g, ""))} />
-                      </label>
-                      <button className="btn" disabled={codigo6.length !== 6}>Confirmar</button>
-                    </form>
-                  )}
-                </div>
+                <form onSubmit={confirmarCodigo} style={{display:'grid',gap:12}}>
+                  <label className="campo"><span>Código único que muestra el cliente en su pase</span><input autoComplete="off" autoCapitalize="characters" maxLength={15} placeholder="ABCDEFGH:123456" value={codigo6} onChange={e => setCodigo6(e.target.value.toUpperCase().replace(/[^A-Z0-9:]/g,''))} /></label>
+                  <button className="btn" disabled={!/^[A-Z0-9]{8}:\d{6}$/.test(codigo6)}>Verificar cliente</button>
+                </form>
               )}
             </>
           ) : (

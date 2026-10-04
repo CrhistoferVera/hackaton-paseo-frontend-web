@@ -24,6 +24,10 @@ export function useDatos<T = any>(ruta: string | null) {
 
   useEffect(() => {
     void recargar();
+    const alVolver = () => { if (document.visibilityState === 'visible') void recargar(); };
+    window.addEventListener('focus', alVolver);
+    document.addEventListener('visibilitychange', alVolver);
+    return () => { window.removeEventListener('focus', alVolver); document.removeEventListener('visibilitychange', alVolver); };
   }, [recargar]);
 
   return { datos, error, cargando, recargar, setDatos };

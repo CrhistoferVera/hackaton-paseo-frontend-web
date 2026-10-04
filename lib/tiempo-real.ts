@@ -21,7 +21,7 @@ function conectar(): Socket | null {
 /** Suscribe la pantalla a eventos en tiempo real del backend (Observer). */
 export function useTiempoReal(eventos: Record<string, (datos: any) => void>) {
   const ref = useRef(eventos);
-  ref.current = eventos;
+  useEffect(() => { ref.current = eventos; });
 
   useEffect(() => {
     let s = conectar();
