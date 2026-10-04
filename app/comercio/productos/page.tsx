@@ -1,12 +1,13 @@
 "use client";
 
+import { VariantesProducto } from "@/components/variantes-producto";
 import { useState } from "react";
 import { Cabecera, Mensajes, PanelLateral } from "@/components/marco";
 import { api, urlArchivo } from "@/lib/api";
 import { bs } from "@/lib/formato";
 import { useAccion, useDatos } from "@/lib/use-datos";
 
-const VACIO = { id: "", nombre: "", descripcion: "", precioBs: "", stock: "", categoriaId: "", fotoUrl: "", activo: true, tiempo: "", etiquetas: "" };
+const VACIO = { id: "", nombre: "", descripcion: "", precioBs: "", stock: "", categoriaId: "", fotoUrl: "", activo: true, tiempo: "", etiquetas: "", variantes: [] };
 
 /** HU-Y13: el comercio administra su catálogo PaseoYa. */
 export default function Productos() {
@@ -15,11 +16,12 @@ export default function Productos() {
   const { datos: local } = useDatos<any>("/local/mi-local");
   const [f, setF] = useState<any | null>(null);
   const a = useAccion();
+  const [subiendoVariante, setSubiendoVariante] = useState(false);
 
   const abrir = (p?: any) =>
     setF(
       p
-        ? { id: p.id, nombre: p.nombre, descripcion: p.descripcion, precioBs: String(p.precio_bs), stock: String(p.stock), categoriaId: p.categoria_id, fotoUrl: p.foto_url ?? "", activo: p.activo, tiempo: p.tiempo_preparacion_min == null ? "" : String(p.tiempo_preparacion_min), etiquetas: (p.etiquetas ?? []).join(", ") }
+        ? { id: p.id, nombre: p.nombre, descripcion: p.descripcion, precioBs: String(p.precio_bs), stock: String(p.stock), categoriaId: p.categoria_id, fotoUrl: p.foto_url ?? "", activo: p.activo, tiempo: p.tiempo_preparacion_min == null ? "" : String(p.tiempo_preparacion_min), etiquetas: (p.etiquetas ?? []).join(", "), variantes: (p.variantes ?? []).map((g: any) => ({id:g.id,titulo:g.titulo,opciones:g.opciones.map((v: any) => ({id:v.id,nombre:v.nombre,stock:v.stock,precioBs:v.precio_bs == null ? null : Number(v.precio_bs),fotoUrl:v.foto_url}))})) }
         : { ...VACIO, categoriaId: local?.categoria_id ?? "" },
     );
 
@@ -32,7 +34,9 @@ export default function Productos() {
 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
+    if (subiendoVariante) return;
     const cuerpo = { nombre: f.nombre, descripcion: f.descripcion, precioBs: Number(f.precioBs), stock: Number(f.stock), categoriaId: f.categoriaId, fotoUrl: f.fotoUrl || null, activo: f.activo,
+      variantes: f.variantes,
       tiempoPreparacionMin: f.tiempo === "" ? null : Number(f.tiempo),
       etiquetas: f.etiquetas.split(",").map((x: string) => x.trim()).filter((x: string) => x.length >= 2),
     };
@@ -100,7 +104,7 @@ export default function Productos() {
               <span>Categoría</span>
               <select required value={f.categoriaId} onChange={(e) => setF({ ...f, categoriaId: e.target.value })}>
                 <option value="">Elige…</option>
-                {categorias?.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                {categorias?.filter(c => c.ambito === categorias.find(cat => cat.id === local?.categoria_id)?.ambito).map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
               </select>
             </label>
             <label className="campo">
@@ -111,9 +115,10 @@ export default function Productos() {
             <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <input type="checkbox" checked={f.activo} onChange={(e) => setF({ ...f, activo: e.target.checked })} /> Publicado en PaseoYa
             </label>
+            <VariantesProducto grupos={f.variantes} onChange={variantes => setF({...f,variantes})} onSubiendo={setSubiendoVariante} />
             <Mensajes error={a.error} />
             <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
-              <button className="btn" disabled={a.enviando}>Guardar</button>
+              <button className="btn" disabled={a.enviando || subiendoVariante}>Guardar</button>
               {f.id && <button type="button" className="btn claro" onClick={eliminar}>Eliminar</button>}
             </div>
           </form>
